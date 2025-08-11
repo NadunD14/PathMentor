@@ -5,8 +5,8 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import Image from 'next/image';
-import PublicHeader from '@/components/shared/PublicHeader';
-import PublicFooter from '@/components/shared/PublicFooter';
+import PublicHeader from '@/components/user/shared/PublicHeader';
+import PublicFooter from '@/components/user/shared/PublicFooter';
 
 export default function HomePage() {
     const { user } = useAuth();

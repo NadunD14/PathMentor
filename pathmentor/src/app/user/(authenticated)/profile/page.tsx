@@ -4,13 +4,14 @@ import ProfileCard from '@/components/user/Profile/ProfileCard';
 import PreferencesCard from '@/components/user/Profile/PreferencesCard';
 import SubscriptionCard from '@/components/user/Profile/SubscriptionCard';
 import NotificationsCard from '@/components/user/Profile/NotificationsCard';
+import PageHeader from '@/components/user/shared/PageHeader';
 
 export default function ProfilePage() {
     return (
-        <div className="container mx-auto px-4 py-8">
-            <h1 className="text-3xl font-bold text-gray-900 mb-6">Profile</h1>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
+            <PageHeader title="Profile" subtitle="Manage your account settings and preferences" />
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">
                 <div className="lg:col-span-1 space-y-6">
                     <ProfileCard />
                     <SubscriptionCard />

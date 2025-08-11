@@ -1,9 +1,8 @@
-'use client';
+"use client";
 
 import Image from 'next/image';
 import Link from 'next/link';
 import { useState } from 'react';
-
 export default function AboutPage() {
     const [activeTab, setActiveTab] = useState('mission');
 
@@ -43,18 +42,19 @@ export default function AboutPage() {
     return (
         <div className="bg-white min-h-screen">
             {/* Hero Section */}
-            <div className="relative bg-gray-50">
-                <div className="absolute inset-0 overflow-hidden">
-                    <div className="absolute inset-0 bg-gradient-to-r from-blue-600 to-indigo-700 mix-blend-multiply" />
-                </div>
-                <div className="relative max-w-7xl mx-auto py-24 px-4 sm:py-32 sm:px-6 lg:px-8">
-                    <h1 className="text-4xl font-extrabold tracking-tight text-white md:text-5xl lg:text-6xl">
+            <div className="bg-gradient-to-r from-blue-600 to-indigo-800">
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-12">
+                    <h1 className="text-4xl font-extrabold tracking-tight text-white md:text-4xl">
                         About PathMentor
                     </h1>
-                    <p className="mt-6 max-w-3xl text-xl text-indigo-100">
+                    <p className="mt-4 max-w-3xl text-lg text-indigo-100">
                         We're transforming how people learn with AI-powered personalized learning paths.
                         Our platform adapts to your unique learning style, pace, and goals.
                     </p>
+                    <div className="mt-6 flex items-center gap-3">
+                        <Link href="/user/register" className="btn-primary">Get started</Link>
+                        <Link href="/user/pricing" className="btn-outline">See pricing</Link>
+                    </div>
                 </div>
             </div>
 
@@ -308,22 +308,14 @@ export default function AboutPage() {
 
             {/* Call to Action */}
             <div className="bg-blue-700">
-                <div className="max-w-7xl mx-auto py-12 px-4 sm:px-6 lg:py-16 lg:px-8 lg:flex lg:items-center lg:justify-between">
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 lg:py-16 lg:flex lg:items-center lg:justify-between">
                     <h2 className="text-3xl font-extrabold tracking-tight text-white sm:text-4xl">
                         <span className="block">Ready to transform your learning journey?</span>
                         <span className="block text-blue-200">Start with PathMentor today.</span>
                     </h2>
-                    <div className="mt-8 flex lg:mt-0 lg:flex-shrink-0">
-                        <div className="inline-flex rounded-md shadow">
-                            <Link href="/user/register" className="inline-flex items-center justify-center px-5 py-3 border border-transparent text-base font-medium rounded-md text-blue-600 bg-white hover:bg-blue-50">
-                                Get started
-                            </Link>
-                        </div>
-                        <div className="ml-3 inline-flex rounded-md shadow">
-                            <Link href="/user/login" className="inline-flex items-center justify-center px-5 py-3 border border-transparent text-base font-medium rounded-md text-white bg-blue-800 hover:bg-blue-900">
-                                Log in
-                            </Link>
-                        </div>
+                    <div className="mt-8 flex lg:mt-0 lg:flex-shrink-0 gap-3">
+                        <Link href="/user/register" className="btn-outline bg-white text-blue-600 hover:bg-blue-50 border-white">Get started</Link>
+                        <Link href="/user/login" className="btn-primary bg-blue-800 hover:bg-blue-900">Log in</Link>
                     </div>
                 </div>
             </div>

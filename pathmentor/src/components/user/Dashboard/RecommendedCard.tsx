@@ -1,6 +1,6 @@
 'use client';
 
-import Card from '@/components/user/shared/Card';
+import Card from '@/components/user/shared-authenticated/Card';
 import { mockRecommendations } from '@/lib/mockData';
 
 export default function RecommendedCard() {
@@ -18,10 +18,10 @@ export default function RecommendedCard() {
                         <div className="flex justify-between items-start">
                             <h4 className="font-medium text-gray-800">{rec.title}</h4>
                             <span className={`text-xs px-2 py-1 rounded-full ${rec.difficulty === 'beginner'
-                                    ? 'bg-green-100 text-green-800'
-                                    : rec.difficulty === 'intermediate'
-                                        ? 'bg-blue-100 text-blue-800'
-                                        : 'bg-purple-100 text-purple-800'
+                                ? 'bg-green-100 text-green-800'
+                                : rec.difficulty === 'intermediate'
+                                    ? 'bg-blue-100 text-blue-800'
+                                    : 'bg-purple-100 text-purple-800'
                                 }`}>
                                 {rec.difficulty.charAt(0).toUpperCase() + rec.difficulty.slice(1)}
                             </span>

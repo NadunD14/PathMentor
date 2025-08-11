@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 import { useState } from 'react';
 import Link from 'next/link';
@@ -58,23 +58,23 @@ export default function PricingPage() {
 
     return (
         <div className="bg-gray-50 min-h-screen">
-            <div className="px-4 pt-16 pb-20 sm:px-6 lg:px-8 lg:pt-24 lg:pb-28 max-w-7xl mx-auto">
-                <div className="text-center">
-                    <h1 className="text-3xl font-extrabold text-gray-900 sm:text-4xl lg:text-5xl">
-                        Choose the right plan for your journey
-                    </h1>
-                    <p className="mt-4 max-w-2xl mx-auto text-xl text-gray-500">
-                        Start with our free plan or upgrade to unlock premium features that accelerate your learning.
-                    </p>
+            {/* Hero bar */}
+            <div className="bg-gradient-to-r from-blue-600 to-indigo-800">
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-26">
+                    <h1 className="text-3xl md:text-4xl font-extrabold text-white tracking-tight">Choose the right plan for your journey</h1>
+                    <p className="mt-2 max-w-2xl text-indigo-100">Start for free, then upgrade to unlock premium features that accelerate your learning.</p>
                 </div>
+            </div>
+
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
 
                 <div className="mt-12 flex justify-center">
                     <div className="relative bg-white rounded-lg p-0.5 flex">
                         <button
                             type="button"
                             className={`relative py-2 px-6 border border-transparent rounded-md text-sm font-medium whitespace-nowrap focus:outline-none focus:z-10 sm:w-auto ${billingCycle === 'monthly'
-                                    ? 'bg-blue-600 text-white'
-                                    : 'bg-white text-gray-700'
+                                ? 'bg-blue-600 text-white'
+                                : 'bg-white text-gray-700'
                                 }`}
                             onClick={() => setBillingCycle('monthly')}
                         >
@@ -83,8 +83,8 @@ export default function PricingPage() {
                         <button
                             type="button"
                             className={`ml-0.5 relative py-2 px-6 border border-transparent rounded-md text-sm font-medium whitespace-nowrap focus:outline-none focus:z-10 sm:w-auto ${billingCycle === 'annually'
-                                    ? 'bg-blue-600 text-white'
-                                    : 'bg-white text-gray-700'
+                                ? 'bg-blue-600 text-white'
+                                : 'bg-white text-gray-700'
                                 }`}
                             onClick={() => setBillingCycle('annually')}
                         >
@@ -152,8 +152,8 @@ export default function PricingPage() {
                             <div className="mt-8">
                                 <button
                                     className={`w-full px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 ${plan.buttonVariant === 'solid'
-                                            ? 'bg-blue-600 text-white hover:bg-blue-700'
-                                            : 'bg-white text-blue-600 border-blue-600 hover:bg-blue-50'
+                                        ? 'bg-blue-600 text-white hover:bg-blue-700'
+                                        : 'bg-white text-blue-600 border-blue-600 hover:bg-blue-50'
                                         }`}
                                 >
                                     {plan.buttonText}
@@ -197,17 +197,9 @@ export default function PricingPage() {
 
                 <div className="mt-12 text-center">
                     <h2 className="text-2xl font-bold text-gray-900">Ready to accelerate your learning?</h2>
-                    <div className="mt-8 flex justify-center">
-                        <div className="inline-flex rounded-md shadow">
-                            <Link href="/user/register" className="inline-flex items-center justify-center px-5 py-3 border border-transparent text-base font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700">
-                                Get started now
-                            </Link>
-                        </div>
-                        <div className="ml-3 inline-flex">
-                            <Link href="/user/about" className="inline-flex items-center justify-center px-5 py-3 border border-transparent text-base font-medium rounded-md text-blue-700 bg-blue-100 hover:bg-blue-200">
-                                Learn more
-                            </Link>
-                        </div>
+                    <div className="mt-6 flex items-center justify-center gap-3">
+                        <Link href="/user/register" className="btn-primary">Get started now</Link>
+                        <Link href="/user/about" className="btn-outline">Learn more</Link>
                     </div>
                 </div>
             </div>

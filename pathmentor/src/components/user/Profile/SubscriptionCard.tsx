@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import Card from '@/components/user/shared/Card';
+import Card from '@/components/user/shared-authenticated/Card';
 import { useUserStore } from '@/lib/store/useUserStore';
 
 export default function SubscriptionCard() {
@@ -69,10 +69,10 @@ export default function SubscriptionCard() {
                             {currentPlan.name} Plan
                         </h3>
                         <span className={`ml-2 px-2 py-1 text-xs rounded-full ${subscriptionStatus === 'premium'
-                                ? 'bg-purple-100 text-purple-800'
-                                : subscriptionStatus === 'basic'
-                                    ? 'bg-blue-100 text-blue-800'
-                                    : 'bg-gray-100 text-gray-800'
+                            ? 'bg-purple-100 text-purple-800'
+                            : subscriptionStatus === 'basic'
+                                ? 'bg-blue-100 text-blue-800'
+                                : 'bg-gray-100 text-gray-800'
                             }`}>
                             {subscriptionStatus === 'free' ? 'Current' : 'Active'}
                         </span>

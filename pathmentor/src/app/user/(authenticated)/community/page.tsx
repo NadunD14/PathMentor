@@ -4,21 +4,22 @@ import { useState } from 'react';
 import CommunityFeed from '@/components/user/Community/CommunityFeed';
 import StudyGroupsCard from '@/components/user/Community/StudyGroupsCard';
 import CreatePostCard from '@/components/user/Community/CreatePostCard';
+import PageHeader from '@/components/user/shared/PageHeader';
 
 export default function CommunityPage() {
     const [activeTab, setActiveTab] = useState('feed');
 
     return (
-        <div className="container mx-auto px-4 py-8">
-            <h1 className="text-3xl font-bold text-gray-900 mb-6">Community</h1>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
+            <PageHeader title="Community" subtitle="Connect with other learners and share progress" />
 
             <div className="mb-6 border-b border-gray-200">
                 <nav className="flex space-x-8">
                     <button
                         onClick={() => setActiveTab('feed')}
                         className={`py-4 px-1 border-b-2 font-medium text-sm ${activeTab === 'feed'
-                                ? 'border-blue-500 text-blue-600'
-                                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                            ? 'border-blue-500 text-blue-600'
+                            : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                             }`}
                     >
                         Discussion Feed
@@ -26,8 +27,8 @@ export default function CommunityPage() {
                     <button
                         onClick={() => setActiveTab('groups')}
                         className={`py-4 px-1 border-b-2 font-medium text-sm ${activeTab === 'groups'
-                                ? 'border-blue-500 text-blue-600'
-                                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                            ? 'border-blue-500 text-blue-600'
+                            : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                             }`}
                     >
                         Study Groups
@@ -35,7 +36,7 @@ export default function CommunityPage() {
                 </nav>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">
                 <div className="lg:col-span-2">
                     {activeTab === 'feed' && (
                         <div className="space-y-6">

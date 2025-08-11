@@ -4,20 +4,24 @@ import SummaryCard from '@/components/user/Dashboard/SummaryCard';
 import ActivityFeedCard from '@/components/user/Dashboard/ActivityFeedCard';
 import RecommendedCard from '@/components/user/Dashboard/RecommendedCard';
 import UpcomingTasksCard from '@/components/user/Dashboard/UpcomingTasksCard';
+import PageHeader from '@/components/user/shared/PageHeader';
 
 export default function DashboardPage() {
     return (
-        <div className="container mx-auto px-4 py-8">
-            <h1 className="text-3xl font-bold text-gray-900 mb-6">Dashboard</h1>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
+            <PageHeader
+                title="Dashboard"
+                subtitle="Overview of your learning journey"
+            />
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">
                 <div className="lg:col-span-1 space-y-6">
                     <SummaryCard />
                     <ActivityFeedCard />
                 </div>
 
                 <div className="lg:col-span-2 space-y-6">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 lg:gap-8">
                         <UpcomingTasksCard />
                         <RecommendedCard />
                     </div>

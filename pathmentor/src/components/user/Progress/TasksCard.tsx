@@ -1,8 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-import Card from '@/components/user/shared/Card';
-import TaskItem from '@/components/user/shared/TaskItem';
+import Card from '@/components/user/shared-authenticated/Card';
+import TaskItem from '@/components/user/shared-authenticated/TaskItem';
 import { PriorityLevel, Task, LearningCategory, useProgressStore } from '@/lib/store/useProgressStore';
 
 type FilterOptions = 'all' | LearningCategory | PriorityLevel;
@@ -26,8 +26,8 @@ export default function TasksCard() {
                 <button
                     onClick={() => setFilter('all')}
                     className={`text-xs px-3 py-1 rounded-full ${filter === 'all'
-                            ? 'bg-blue-100 text-blue-800'
-                            : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                        ? 'bg-blue-100 text-blue-800'
+                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                         }`}
                 >
                     All
@@ -35,8 +35,8 @@ export default function TasksCard() {
                 <button
                     onClick={() => setFilter('high')}
                     className={`text-xs px-3 py-1 rounded-full ${filter === 'high'
-                            ? 'bg-red-100 text-red-800'
-                            : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                        ? 'bg-red-100 text-red-800'
+                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                         }`}
                 >
                     High Priority
@@ -44,8 +44,8 @@ export default function TasksCard() {
                 <button
                     onClick={() => setFilter('medium')}
                     className={`text-xs px-3 py-1 rounded-full ${filter === 'medium'
-                            ? 'bg-yellow-100 text-yellow-800'
-                            : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                        ? 'bg-yellow-100 text-yellow-800'
+                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                         }`}
                 >
                     Medium Priority
@@ -53,8 +53,8 @@ export default function TasksCard() {
                 <button
                     onClick={() => setFilter('low')}
                     className={`text-xs px-3 py-1 rounded-full ${filter === 'low'
-                            ? 'bg-green-100 text-green-800'
-                            : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                        ? 'bg-green-100 text-green-800'
+                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                         }`}
                 >
                     Low Priority

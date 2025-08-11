@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import Card from '@/components/user/shared/Card';
+import Card from '@/components/user/shared-authenticated/Card';
 import { useUserStore } from '@/lib/store/useUserStore';
 
 export default function ProfileCard() {

@@ -6,7 +6,7 @@ import { usePathname } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 
 const navigation = [
-    { name: 'Dashboard', href: '/user/dashboard' },
+    { name: 'Dashboard', href: '/user/' },
     { name: 'Learn Me', href: '/user/learnme' },
     { name: 'Progress', href: '/user/progress' },
     { name: 'Community', href: '/user/community' },
@@ -24,7 +24,7 @@ export default function Navigation() {
                 <div className="flex justify-between h-14">
                     <div className="flex">
                         <div className="flex-shrink-0 flex items-center">
-                            <Link href="/user/dashboard" className="text-lg font-bold text-blue-600 hover:text-blue-700 transition-colors">
+                            <Link href="/user" className="text-lg font-bold text-blue-600 hover:text-blue-700 transition-colors">
                                 PathMentor
                             </Link>
                         </div>
@@ -36,8 +36,8 @@ export default function Navigation() {
                                         key={item.name}
                                         href={item.href}
                                         className={`${isActive
-                                                ? 'text-gray-900 border-b-2 border-blue-600'
-                                                : 'text-gray-600 hover:text-gray-900 hover:border-b-2 hover:border-gray-300'
+                                            ? 'text-gray-900 border-b-2 border-blue-600'
+                                            : 'text-gray-600 hover:text-gray-900 hover:border-b-2 hover:border-gray-300'
                                             } inline-flex items-center px-1 pt-1 text-sm font-medium transition-colors`}
                                     >
                                         {item.name}
@@ -121,8 +121,8 @@ export default function Navigation() {
                                 key={item.name}
                                 href={item.href}
                                 className={`${isActive
-                                        ? 'bg-blue-50 text-blue-700'
-                                        : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900'
+                                    ? 'bg-blue-50 text-blue-700'
+                                    : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900'
                                     } block px-3 py-2 rounded-md text-base font-medium`}
                                 onClick={() => setMobileOpen(false)}
                             >

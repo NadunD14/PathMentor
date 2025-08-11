@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import Card from '@/components/user/shared/Card';
+import Card from '@/components/user/shared-authenticated/Card';
 
 interface StudyGroup {
     id: string;
@@ -123,8 +123,8 @@ export default function StudyGroupsCard() {
                             <button
                                 onClick={() => toggleMembership(group.id)}
                                 className={`px-3 py-1 rounded-md text-sm ${group.isMember
-                                        ? 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                                        : 'bg-blue-600 text-white hover:bg-blue-700'
+                                    ? 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                                    : 'bg-blue-600 text-white hover:bg-blue-700'
                                     }`}
                             >
                                 {group.isMember ? 'Leave Group' : 'Join Group'}

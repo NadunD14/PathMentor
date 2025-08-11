@@ -3,9 +3,9 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
-import Navigation from '@/components/user/Navigation';
-import PublicHeader from '@/components/shared/PublicHeader';
-import PublicFooter from '@/components/shared/PublicFooter';
+import Navigation from '@/components/user/shared-authenticated/Navigation';
+import PublicHeader from '@/components/user/shared/PublicHeader';
+import PublicFooter from '@/components/user/shared/PublicFooter';
 
 export default function UserLayout({
     children,

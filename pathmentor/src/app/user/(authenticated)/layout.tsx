@@ -3,7 +3,7 @@
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter, usePathname } from 'next/navigation';
 import { useEffect } from 'react';
-import Navigation from '@/components/user/Navigation';
+import Navigation from '@/components/user/shared-authenticated/Navigation';
 import { Suspense } from 'react';
 
 export default function AuthenticatedLayout({

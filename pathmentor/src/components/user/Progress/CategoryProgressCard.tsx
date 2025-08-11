@@ -1,8 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-import Card from '@/components/user/shared/Card';
-import ProgressBar from '@/components/user/shared/ProgressBar';
+import Card from '@/components/user/shared-authenticated/Card';
+import ProgressBar from '@/components/user/shared-authenticated/ProgressBar';
 import { CategoryProgress, useProgressStore } from '@/lib/store/useProgressStore';
 
 export default function CategoryProgressCard() {
@@ -29,8 +29,8 @@ export default function CategoryProgressCard() {
                     <div
                         key={category.category}
                         className={`cursor-pointer p-3 rounded-lg ${selectedCategory?.category === category.category
-                                ? 'bg-blue-50 border border-blue-200'
-                                : 'hover:bg-gray-50'
+                            ? 'bg-blue-50 border border-blue-200'
+                            : 'hover:bg-gray-50'
                             }`}
                         onClick={() => handleCategoryClick(category)}
                     >

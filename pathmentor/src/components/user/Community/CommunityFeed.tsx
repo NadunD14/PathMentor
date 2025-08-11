@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import Card from '@/components/user/shared/Card';
+import Card from '@/components/user/shared-authenticated/Card';
 
 interface Post {
     id: string;
@@ -116,8 +116,8 @@ export default function CommunityFeed() {
                 <div className="flex overflow-x-auto pb-2 space-x-2">
                     <button
                         className={`px-4 py-2 rounded-full text-sm whitespace-nowrap ${selectedCategory === null
-                                ? 'bg-blue-100 text-blue-800'
-                                : 'bg-gray-100 text-gray-800 hover:bg-gray-200'
+                            ? 'bg-blue-100 text-blue-800'
+                            : 'bg-gray-100 text-gray-800 hover:bg-gray-200'
                             }`}
                         onClick={() => setSelectedCategory(null)}
                     >
@@ -128,8 +128,8 @@ export default function CommunityFeed() {
                         <button
                             key={category}
                             className={`px-4 py-2 rounded-full text-sm whitespace-nowrap ${selectedCategory === category
-                                    ? 'bg-blue-100 text-blue-800'
-                                    : 'bg-gray-100 text-gray-800 hover:bg-gray-200'
+                                ? 'bg-blue-100 text-blue-800'
+                                : 'bg-gray-100 text-gray-800 hover:bg-gray-200'
                                 }`}
                             onClick={() => setSelectedCategory(category)}
                         >

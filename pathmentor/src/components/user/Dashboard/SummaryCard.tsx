@@ -1,7 +1,7 @@
 'use client';
 
-import Card from '@/components/user/shared/Card';
-import ProgressBar from '@/components/user/shared/ProgressBar';
+import Card from '@/components/user/shared-authenticated/Card';
+import ProgressBar from '@/components/user/shared-authenticated/ProgressBar';
 import { useProgressStore, CategoryProgress } from '@/lib/store/useProgressStore';
 
 export default function SummaryCard() {

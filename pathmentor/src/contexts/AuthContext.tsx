@@ -89,7 +89,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 setIsAuthenticated(true);
 
                 // Redirect to dashboard
-                router.push('/user/dashboard');
+                router.push('/user');
             } else {
                 throw new Error('Please provide both email and password');
             }

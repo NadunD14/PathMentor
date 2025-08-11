@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import Card from '@/components/user/shared/Card';
+import Card from '@/components/user/shared-authenticated/Card';
 
 export default function CreatePostCard() {
     const [isOpen, setIsOpen] = useState(false);

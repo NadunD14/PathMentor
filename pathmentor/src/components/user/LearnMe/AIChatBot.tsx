@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, FormEvent, useRef, useEffect } from 'react';
-import Card from '@/components/user/shared/Card';
+import Card from '@/components/user/shared-authenticated/Card';
 import { mockConversationHistory } from '@/lib/mockData';
 
 export default function AIChatBot() {

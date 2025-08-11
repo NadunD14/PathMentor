@@ -1,6 +1,6 @@
 'use client';
 
-import Card from '@/components/user/shared/Card';
+import Card from '@/components/user/shared-authenticated/Card';
 import { useProgressStore, Task } from '@/lib/store/useProgressStore';
 
 export default function UpcomingTasksCard() {
