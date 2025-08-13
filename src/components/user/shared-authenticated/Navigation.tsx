@@ -59,7 +59,7 @@ export default function Navigation() {
                                 >
                                     <span className="sr-only">Open user menu</span>
                                     <div className="h-8 w-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-600">
-                                        {user?.name.charAt(0).toUpperCase()}
+                                        {user?.name ? user.name.charAt(0).toUpperCase() : user?.email.charAt(0).toUpperCase()}
                                     </div>
                                 </button>
                             </div>
@@ -82,8 +82,8 @@ export default function Navigation() {
                                     <button
                                         className="w-full text-left block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                                         role="menuitem"
-                                        onClick={() => {
-                                            logout();
+                                        onClick={async () => {
+                                            await logout();
                                             setIsProfileMenuOpen(false);
                                         }}
                                     >
@@ -135,11 +135,11 @@ export default function Navigation() {
                     <div className="flex items-center px-4">
                         <div className="flex-shrink-0">
                             <div className="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600">
-                                {user?.name.charAt(0).toUpperCase()}
+                                {user?.name ? user.name.charAt(0).toUpperCase() : user?.email.charAt(0).toUpperCase()}
                             </div>
                         </div>
                         <div className="ml-3">
-                            <div className="text-base font-medium text-gray-800">{user?.name}</div>
+                            <div className="text-base font-medium text-gray-800">{user?.name || 'User'}</div>
                             <div className="text-sm font-medium text-gray-500">{user?.email}</div>
                         </div>
                     </div>
@@ -152,7 +152,10 @@ export default function Navigation() {
                             Your Profile
                         </Link>
                         <button
-                            onClick={logout}
+                            onClick={async () => {
+                                await logout();
+                                setMobileOpen(false);
+                            }}
                             className="w-full text-left block px-4 py-2 text-base font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-100"
                         >
                             Sign out

@@ -28,6 +28,11 @@ export default function RegisterPage() {
         setError('');
 
         // Validation
+        if (!formData.fullName || !formData.email || !formData.password) {
+            setError('Please fill in all required fields');
+            return;
+        }
+
         if (formData.password !== formData.confirmPassword) {
             setError('Passwords do not match');
             return;
@@ -41,7 +46,13 @@ export default function RegisterPage() {
         try {
             // Register with our auth context
             await register(formData.fullName, formData.email, formData.password);
+
             // The redirect will be handled in the AuthContext after successful registration
+            // Note: If Supabase is configured to require email confirmation,
+            // display a message to the user
+            if (!isLoading && authError?.includes('email confirmation')) {
+                setError('Please check your email for a confirmation link to complete registration');
+            }
         } catch (err: any) {
             setError(err.message || 'Registration failed. Please try again.');
         }
@@ -187,20 +198,36 @@ export default function RegisterPage() {
 
                         <div className="mt-6 grid grid-cols-2 gap-3">
                             <div>
-                                <a
-                                    href="#"
+                                <button
+                                    type="button"
+                                    onClick={async () => {
+                                        try {
+                                            const { signInWithProvider } = await import('@/lib/auth');
+                                            await signInWithProvider('google');
+                                        } catch (err: any) {
+                                            setError(err.message || 'Failed to sign up with Google');
+                                        }
+                                    }}
                                     className="w-full inline-flex justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm bg-white text-sm font-medium text-gray-500 hover:bg-gray-50"
                                 >
                                     <span className="sr-only">Sign up with Google</span>
                                     <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
                                         <path d="M12.545,10.239v3.821h5.445c-0.712,2.315-2.647,3.972-5.445,3.972c-3.332,0-6.033-2.701-6.033-6.032s2.701-6.032,6.033-6.032c1.498,0,2.866,0.549,3.921,1.453l2.814-2.814C17.503,2.988,15.139,2,12.545,2C7.021,2,2.543,6.477,2.543,12s4.478,10,10.002,10c8.396,0,10.249-7.85,9.426-11.748L12.545,10.239z" />
                                     </svg>
-                                </a>
+                                </button>
                             </div>
 
                             <div>
-                                <a
-                                    href="#"
+                                <button
+                                    type="button"
+                                    onClick={async () => {
+                                        try {
+                                            const { signInWithProvider } = await import('@/lib/auth');
+                                            await signInWithProvider('github');
+                                        } catch (err: any) {
+                                            setError(err.message || 'Failed to sign up with GitHub');
+                                        }
+                                    }}
                                     className="w-full inline-flex justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm bg-white text-sm font-medium text-gray-500 hover:bg-gray-50"
                                 >
                                     <span className="sr-only">Sign up with GitHub</span>
@@ -211,7 +238,7 @@ export default function RegisterPage() {
                                             clipRule="evenodd"
                                         />
                                     </svg>
-                                </a>
+                                </button>
                             </div>
                         </div>
                     </div>

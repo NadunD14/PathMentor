@@ -2,13 +2,10 @@
 
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
-
-interface User {
-    id: string;
-    name: string;
-    email: string;
-    role: 'user' | 'admin';
-}
+import { supabase } from '@/supabase-client';
+import { User } from '@/lib/types/user';
+import { syncSupabaseSessionToCookie } from '@/lib/utils/cookieUtils';
+import { signIn, signUp, signOut, getCurrentUser } from '@/lib/api/auth';
 
 interface AuthContextType {
     user: User | null;
@@ -29,27 +26,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
     const router = useRouter();
 
-    // Check if user is already logged in on mount
+    // Check if user is already logged in on mount and set up auth state listener
     useEffect(() => {
+        // Initial session check
         const checkAuth = async () => {
             try {
-                // In a real app, you'd validate the token with your backend
-                const token = localStorage.getItem('auth_token');
+                const currentUser = await getCurrentUser();
 
-                if (token) {
-                    // Mock user data - in a real app this would come from your API
-                    const userData: User = {
-                        id: '123',
-                        name: 'John Doe',
-                        email: 'john@example.com',
-                        role: 'user'
-                    };
-
-                    setUser(userData);
+                if (currentUser) {
+                    setUser(currentUser);
                     setIsAuthenticated(true);
-
-                    // Set cookie for middleware authentication check
-                    document.cookie = `auth_token=${token}; path=/; max-age=${60 * 60 * 24 * 7}`; // 7 days
                 }
             } catch (err) {
                 console.error('Authentication error:', err);
@@ -60,6 +46,33 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         };
 
         checkAuth();
+
+        // Set up auth state listener for when auth state changes
+        const { data: { subscription } } = supabase.auth.onAuthStateChange(
+            async (event, session) => {
+                if (session) {
+                    // User is signed in
+                    const currentUser = await getCurrentUser();
+                    setUser(currentUser);
+                    setIsAuthenticated(true);
+
+                    // Sync the session to cookies for SSR and middleware
+                    syncSupabaseSessionToCookie(session.access_token);
+                } else {
+                    // User is signed out
+                    setUser(null);
+                    setIsAuthenticated(false);
+                    syncSupabaseSessionToCookie(null);
+                }
+
+                setLoading(false);
+            }
+        );
+
+        // Cleanup subscription when component unmounts
+        return () => {
+            subscription.unsubscribe();
+        };
     }, []);
 
     const login = async (email: string, password: string) => {
@@ -67,31 +80,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setError(null);
 
         try {
-            // In a real app, this would be an API call to your backend
-            // For demo purposes, we'll accept any email/password combination
-            if (email && password) {
-                // Mock successful login
-                const token = 'mock_jwt_token_' + Math.random().toString(36).substring(2);
+            if (!email || !password) {
+                throw new Error('Please provide both email and password');
+            }
 
-                // Store token
-                localStorage.setItem('auth_token', token);
-                document.cookie = `auth_token=${token}; path=/; max-age=${60 * 60 * 24 * 7}`; // 7 days
+            // Sign in with Supabase
+            const { session } = await signIn({ email, password });
 
-                // Set user
-                const userData: User = {
-                    id: '123',
-                    name: 'John Doe',
-                    email: email,
-                    role: 'user'
-                };
+            if (!session) {
+                throw new Error('Login failed. Please check your credentials.');
+            }
 
+            // Get user data
+            const userData = await getCurrentUser();
+
+            if (userData) {
                 setUser(userData);
                 setIsAuthenticated(true);
 
                 // Redirect to dashboard
                 router.push('/user');
-            } else {
-                throw new Error('Please provide both email and password');
             }
         } catch (err: any) {
             setError(err.message || 'Failed to login');
@@ -106,30 +114,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setError(null);
 
         try {
-            // In a real app, this would be an API call to your backend
-            if (name && email && password) {
-                // Mock successful registration
-                const token = 'mock_jwt_token_' + Math.random().toString(36).substring(2);
+            if (!name || !email || !password) {
+                throw new Error('Please provide all required fields');
+            }
 
-                // Store token
-                localStorage.setItem('auth_token', token);
-                document.cookie = `auth_token=${token}; path=/; max-age=${60 * 60 * 24 * 7}`; // 7 days
+            // Sign up with Supabase
+            const { session } = await signUp({ name, email, password });
 
-                // Set user
-                const userData: User = {
-                    id: '123',
-                    name: name,
-                    email: email,
-                    role: 'user'
-                };
+            if (!session) {
+                // In case of email confirmation flow
+                setError('Please check your email for a confirmation link to complete your registration');
+                return;
+            }
 
+            // Get user data
+            const userData = await getCurrentUser();
+
+            if (userData) {
                 setUser(userData);
                 setIsAuthenticated(true);
 
                 // Redirect to dashboard
                 router.push('/user/dashboard');
-            } else {
-                throw new Error('Please provide all required fields');
             }
         } catch (err: any) {
             setError(err.message || 'Failed to register');
@@ -139,16 +145,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
     };
 
-    const logout = () => {
-        // Clear token
-        localStorage.removeItem('auth_token');
-        document.cookie = 'auth_token=; path=/; max-age=0';
+    const logout = async () => {
+        try {
+            // Sign out with Supabase
+            await signOut();
 
-        setUser(null);
-        setIsAuthenticated(false);
+            setUser(null);
+            setIsAuthenticated(false);
 
-        // Redirect to login
-        router.push('/user/login');
+            // Redirect to login
+            router.push('/user/login');
+        } catch (err: any) {
+            console.error('Logout error:', err);
+            setError(err.message || 'Failed to logout');
+        }
     };
 
     return (
