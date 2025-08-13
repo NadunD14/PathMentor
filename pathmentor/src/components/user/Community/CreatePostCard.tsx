@@ -2,12 +2,14 @@
 
 import { useState } from 'react';
 import Card from '@/components/user/shared-authenticated/Card';
+import { supabase } from '@/supabase-client';
 
 export default function CreatePostCard() {
     const [isOpen, setIsOpen] = useState(false);
     const [title, setTitle] = useState('');
     const [content, setContent] = useState('');
     const [category, setCategory] = useState('');
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
     const categories = [
         'Web Development',
@@ -18,16 +20,43 @@ export default function CreatePostCard() {
         'General Discussion',
     ];
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        console.log({ title, content, category });
-        // Here you would typically send the post to your backend
 
-        // Reset the form
-        setTitle('');
-        setContent('');
-        setCategory('');
-        setIsOpen(false);
+        if (!title || !content || !category) {
+            return;
+        }
+
+        setIsSubmitting(true);
+
+        try {
+            // Create the post data object with current values
+            const postData = {
+                title,
+                content,
+                category
+            };
+
+            // Insert the post to Supabase
+            const { error } = await supabase
+                .from('community_post')
+                .insert(postData);
+
+            if (error) {
+                console.error('Error creating post:', error);
+                alert('Failed to create post. Please try again.');
+            } else {
+                // Reset form on success
+                setTitle('');
+                setContent('');
+                setCategory('');
+                setIsOpen(false);
+            }
+        } catch (err) {
+            console.error('Error in post submission:', err);
+        } finally {
+            setIsSubmitting(false);
+        }
     };
 
     return (
@@ -94,9 +123,11 @@ export default function CreatePostCard() {
                         </button>
                         <button
                             type="submit"
-                            className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+                            disabled={isSubmitting}
+                            className={`px-4 py-2 bg-blue-600 text-white rounded-md ${isSubmitting ? 'opacity-70 cursor-not-allowed' : 'hover:bg-blue-700'
+                                }`}
                         >
-                            Post
+                            {isSubmitting ? 'Posting...' : 'Post'}
                         </button>
                     </div>
                 </form>
