@@ -3,8 +3,9 @@
 import { useState } from 'react';
 import Card from '@/components/user/shared-authenticated/Card';
 import { supabase } from '@/supabase-client';
+import { Session } from '@supabase/supabase-js';
 
-export default function CreatePostCard() {
+export default function CreatePostCard({ session }: { session: Session | null }) {
     const [isOpen, setIsOpen] = useState(false);
     const [title, setTitle] = useState('');
     const [content, setContent] = useState('');
@@ -27,6 +28,15 @@ export default function CreatePostCard() {
             return;
         }
 
+        // Check if session exists and has a user property
+        if (!session || !session.user) {
+            console.error('No valid session or user found');
+            alert('You must be logged in to create a post');
+            return;
+        }
+
+        console.log('Session:', session.user.id);
+
         setIsSubmitting(true);
 
         try {
@@ -34,7 +44,8 @@ export default function CreatePostCard() {
             const postData = {
                 title,
                 content,
-                category
+                category,
+                user_id: session.user.id // Add the user ID to the post data
             };
 
             // Insert the post to Supabase

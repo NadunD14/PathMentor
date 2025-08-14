@@ -1,13 +1,33 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import CommunityFeed from '@/components/user/Community/CommunityFeed';
 import StudyGroupsCard from '@/components/user/Community/StudyGroupsCard';
 import CreatePostCard from '@/components/user/Community/CreatePostCard';
 import PageHeader from '@/components/user/shared/PageHeader';
+import { getSession } from '@/lib/auth'; // Import getSession directly from auth.ts
+import { Session } from '@supabase/supabase-js';
 
 export default function CommunityPage() {
     const [activeTab, setActiveTab] = useState('feed');
+    const [session, setSession] = useState<Session | null>(null);
+    const [loading, setLoading] = useState(true);
+
+    // Fetch session when component mounts
+    useEffect(() => {
+        async function fetchSession() {
+            try {
+                const sessionData = await getSession();
+                setSession(sessionData);
+            } catch (error) {
+                console.error('Error fetching session:', error);
+            } finally {
+                setLoading(false);
+            }
+        }
+
+        fetchSession();
+    }, []);
 
     return (
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
@@ -40,7 +60,11 @@ export default function CommunityPage() {
                 <div className="lg:col-span-2">
                     {activeTab === 'feed' && (
                         <div className="space-y-6">
-                            <CreatePostCard />
+                            {loading ? (
+                                <div className="p-4 text-center">Loading...</div>
+                            ) : (
+                                <CreatePostCard session={session} />
+                            )}
                             <CommunityFeed />
                         </div>
                     )}

@@ -4,10 +4,12 @@ import { useState } from 'react';
 import Card from '@/components/user/shared-authenticated/Card';
 import ProgressBar from '@/components/user/shared-authenticated/ProgressBar';
 import { CategoryProgress, useProgressStore } from '@/lib/store/useProgressStore';
+import { useRouter } from 'next/navigation';
 
 export default function CategoryProgressCard() {
     const { categories } = useProgressStore();
     const [selectedCategory, setSelectedCategory] = useState<CategoryProgress | null>(null);
+    const router = useRouter();
 
     const formatTime = (minutes: number) => {
         if (minutes < 60) {
@@ -69,8 +71,11 @@ export default function CategoryProgressCard() {
 
             {categories.length > 0 && (
                 <div className="mt-4 text-center">
-                    <button className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium">
-                        Start Learning
+                    <button
+                        className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium"
+                        onClick={() => router.push('/user/progress/questions')}
+                    >
+                        Start New
                     </button>
                 </div>
             )}
