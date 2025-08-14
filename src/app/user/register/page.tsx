@@ -42,7 +42,7 @@ export default function RegisterPage() {
             setError('You must agree to the terms and conditions');
             return;
         }
-
+        console.log('Attempting to register with:', formData);
         try {
             // Register with our auth context
             await register(formData.fullName, formData.email, formData.password);

@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { supabase } from '@/supabase-client';
 import { User } from '@/lib/types/user';
 import { syncSupabaseSessionToCookie } from '@/lib/utils/cookieUtils';
-import { signIn, signUp, signOut, getCurrentUser } from '@/lib/api/auth';
+import { signIn, signUp, signOut, getCurrentUser } from '@/lib/auth';
 
 interface AuthContextType {
     user: User | null;
@@ -112,6 +112,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const register = async (name: string, email: string, password: string) => {
         setLoading(true);
         setError(null);
+
+        // In register function in AuthContext.tsx
+        console.log('About to call signUp with:', { name, email });
 
         try {
             if (!name || !email || !password) {

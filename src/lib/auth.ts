@@ -39,23 +39,32 @@ export const signInWithProvider = async (provider: 'google' | 'github') => {
  * Sign up a new user
  */
 export const signUp = async ({ name, email, password }: UserRegistration) => {
+    // In signUp function in auth.ts
+    console.log('signUp called with:', { name, email, password });
     // First, sign up the user with Supabase Auth
-    const { data, error } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-            data: {
-                name,
-                role: 'user',
+    try {
+        const { data, error } = await supabase.auth.signUp({
+            email,
+            password,
+            options: {
+                data: {
+                    name,
+                    role: 'user',
+                },
             },
-        },
-    });
+        });
 
-    if (error) {
-        throw new Error(error.message);
+        if (error) {
+            console.error('Supabase signUp error:', error);
+            throw new Error(error.message);
+        }
+
+        console.log('signUp successful:', data);
+        return data;
+    } catch (err) {
+        console.error('Error during signUp:', err);
+        throw err;
     }
-
-    return data;
 };
 
 /**
