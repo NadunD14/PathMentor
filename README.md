@@ -3,9 +3,9 @@ Sure! Here's a README.md file version that you can add to your repository:
 markdown
 Copy
 Edit
-# BestWayToLearn
+# PathMentor
 
-**BestWayToLearn** is a web platform that helps users discover the most effective learning paths based on their personal preferences, goals, and learning styles. By leveraging machine learning algorithms, the platform dynamically generates personalized learning paths, guiding users step-by-step toward their learning objectives.
+**PathMentor** is a web platform that helps users discover the most effective learning paths based on their personal preferences, goals, and learning styles. By leveraging machine learning algorithms, the platform dynamically generates personalized learning paths, guiding users step-by-step toward their learning objectives.
 
 ## Key Features
 
