@@ -63,7 +63,7 @@ async def test_ml_service():
             {"option_id": 2, "question_id": 2}
         ]
         
-        analysis = await ml_service._analyze_user_answers("test-user", dummy_answers)
+        analysis = await ml_service._analyze_user_answers(1, dummy_answers)
         print(f"✅ Analysis completed. Overall score: {analysis.overall_score:.2f}")
         print(f"   Strengths: {', '.join(analysis.strengths[:2])}")
         

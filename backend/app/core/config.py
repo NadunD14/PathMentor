@@ -1,6 +1,7 @@
 import secrets
-from typing import Any, Dict, List, Optional, Union
-from pydantic import AnyHttpUrl, BaseSettings, validator
+from typing import Any, List, Optional, Union
+from pydantic import AnyHttpUrl, field_validator
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
@@ -8,11 +9,12 @@ class Settings(BaseSettings):
     VERSION: str = "1.0.0"
     API_V1_STR: str = "/api/v1"
     SECRET_KEY: str = secrets.token_urlsafe(32)
-    
+
     # CORS Origins
     BACKEND_CORS_ORIGINS: List[AnyHttpUrl] = []
 
-    @validator("BACKEND_CORS_ORIGINS", pre=True)
+    @field_validator("BACKEND_CORS_ORIGINS", mode="before")
+    @classmethod
     def assemble_cors_origins(cls, v: Union[str, List[str]]) -> Union[List[str], str]:
         if isinstance(v, str) and not v.startswith("["):
             return [i.strip() for i in v.split(",")]
@@ -20,45 +22,59 @@ class Settings(BaseSettings):
             return v
         raise ValueError(v)
 
-    # Supabase Configuration (Primary Database)
+    # Supabase Configuration
     SUPABASE_URL: str
-    SUPABASE_ANON_KEY: str
     SUPABASE_SERVICE_ROLE_KEY: str
-    
-    @validator("SUPABASE_URL", pre=True)
+
+    @field_validator("SUPABASE_URL", mode="before")
+    @classmethod
     def validate_supabase_url(cls, v):
         if not v:
             raise ValueError("SUPABASE_URL is required")
         return v
-    
-    @validator("SUPABASE_SERVICE_ROLE_KEY", pre=True)
+
+    @field_validator("SUPABASE_SERVICE_ROLE_KEY", mode="before")
+    @classmethod
     def validate_supabase_service_key(cls, v):
         if not v:
             raise ValueError("SUPABASE_SERVICE_ROLE_KEY is required")
         return v
 
-    # Optional PostgreSQL (if using direct connection)
+    # Optional PostgreSQL
     POSTGRES_SERVER: Optional[str] = None
     POSTGRES_USER: Optional[str] = None
     POSTGRES_PASSWORD: Optional[str] = None
     POSTGRES_DB: Optional[str] = None
     POSTGRES_PORT: Optional[str] = None
-    
-    # Redis (Optional for caching)
+
+    # Redis
     REDIS_URL: str = "redis://localhost:6379"
-    
+
     # JWT
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
-    REFRESH_TOKEN_EXPIRE_MINUTES: int = 60 * 24 * 7  # 7 days
+    REFRESH_TOKEN_EXPIRE_MINUTES: int = 60 * 24 * 7
     ALGORITHM: str = "HS256"
-    
+
     # ML Models
     ML_MODEL_PATH: str = "./models"
     EMBEDDINGS_MODEL: str = "sentence-transformers/all-MiniLM-L6-v2"
-    
-    class Config:
-        env_file = ".env"
-        case_sensitive = True
+
+    model_config = SettingsConfigDict(
+        env_file=".env", 
+        case_sensitive=True,
+        protected_namespaces=()
+    )
+
+    # Inside your Settings class in config.py (or computed elsewhere)
+    @property
+    def SQLALCHEMY_DATABASE_URI(self) -> str:
+        """Builds the database connection string from Supabase credentials."""
+        # Supabase provides a direct connection string to its Postgres database.
+        # You can find this exact string in your Supabase dashboard under:
+        # Settings -> Database -> Connection String -> URI
+        # It typically looks like this:
+        # postgresql://postgres.[project-ref]:[password]@db.[project-ref].supabase.co:5432/postgres
+        return f"postgresql://postgres:{self.POSTGRES_PASSWORD}@{self.POSTGRES_SERVER}:{self.POSTGRES_PORT or 5432}/{self.POSTGRES_DB}"
 
 
 settings = Settings()

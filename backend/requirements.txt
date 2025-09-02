@@ -15,6 +15,7 @@ python-multipart==0.0.6
 
 # Environment & Config
 pydantic[email]==2.5.0
+pydantic-settings==2.1.0
 python-dotenv==1.0.0
 
 # ML & Data Science
