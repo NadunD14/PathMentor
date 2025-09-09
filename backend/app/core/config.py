@@ -47,6 +47,13 @@ class Settings(BaseSettings):
     POSTGRES_DB: Optional[str] = None
     POSTGRES_PORT: Optional[str] = None
 
+    @property
+    def SQLALCHEMY_DATABASE_URI(self) -> Optional[str]:
+        """Build database URI for SQLAlchemy if PostgreSQL credentials are provided"""
+        if all([self.POSTGRES_SERVER, self.POSTGRES_USER, self.POSTGRES_PASSWORD, self.POSTGRES_DB]):
+            return f"postgresql://{self.POSTGRES_USER}:{self.POSTGRES_PASSWORD}@{self.POSTGRES_SERVER}:{self.POSTGRES_PORT or 5432}/{self.POSTGRES_DB}"
+        return None
+
     # Redis
     REDIS_URL: str = "redis://localhost:6379"
 
@@ -64,17 +71,7 @@ class Settings(BaseSettings):
         case_sensitive=True,
         protected_namespaces=()
     )
-
-    # Inside your Settings class in config.py (or computed elsewhere)
-    @property
-    def SQLALCHEMY_DATABASE_URI(self) -> str:
-        """Builds the database connection string from Supabase credentials."""
-        # Supabase provides a direct connection string to its Postgres database.
-        # You can find this exact string in your Supabase dashboard under:
-        # Settings -> Database -> Connection String -> URI
-        # It typically looks like this:
-        # postgresql://postgres.[project-ref]:[password]@db.[project-ref].supabase.co:5432/postgres
-        return f"postgresql://postgres:{self.POSTGRES_PASSWORD}@{self.POSTGRES_SERVER}:{self.POSTGRES_PORT or 5432}/{self.POSTGRES_DB}"
+    
 
 
 settings = Settings()
