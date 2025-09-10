@@ -1,0 +1,10 @@
+{
+    "user_profile": {
+        "goal": "skill_building",
+        "experience_level": "beginner",
+        "topic": "React",
+        "learning_style": "hands_on",
+        "time_commitment": 10,
+        "user_id": "test_user_123"
+    }
+}

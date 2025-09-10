@@ -8,6 +8,16 @@
 # Dependencies
 node_modules/
 __pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+backend/venv/
 
 # Build outputs
 frontend/.next/
@@ -18,6 +28,18 @@ backend/dist/
 # Logs
 *.log
 logs/
+backend/*.log
+
+# Python-specific
+*.egg-info/
+.tox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+.hypothesis/
 
 # IDE and Editor files
 .vscode/
@@ -58,6 +80,13 @@ htmlcov/
 # Test outputs
 test-results/
 .pytest_cache/
+backend/test-results/
+
+# FastAPI specific
+backend/.env
+backend/.env.*
+backend/instance/
+backend/uploads/
 
 # Package files
 *.tgz
@@ -68,3 +97,8 @@ test-results/
 *.bak
 *.backup
 *.old
+
+# API Keys and Secrets
+backend/secrets/
+**/api_keys.json
+**/secrets.json
