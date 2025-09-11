@@ -1,5 +1,6 @@
 """
 Database models for PathMentor backend using Pydantic and SQLAlchemy-like classes.
+Updated to match the existing Supabase schema.
 """
 
 from datetime import datetime
@@ -42,50 +43,135 @@ class Platform(str, Enum):
     MEDIUM = "medium"
 
 
-# Database Models (SQLAlchemy-like for Supabase)
+class TaskStatus(str, Enum):
+    NOT_STARTED = "not-started"
+    IN_PROGRESS = "in-progress"
+    COMPLETED = "completed"
+    SKIPPED = "skipped"
+
+
+class PathStatus(str, Enum):
+    IN_PROGRESS = "in-progress"
+    COMPLETED = "completed"
+    PAUSED = "paused"
+    ARCHIVED = "archived"
+
+
+# Database Models matching Supabase schema
+class User(BaseModel):
+    """User model matching the users table."""
+    user_id: str
+    name: Optional[str] = None
+    email: Optional[str] = None
+    role: Optional[str] = "user"
+    created_at: Optional[datetime] = None
+
+
+class Category(BaseModel):
+    """Category model matching the categories table."""
+    category_id: Optional[int] = None
+    name: str
+    description: Optional[str] = None
+    image_url: Optional[str] = None
+    created_at: Optional[datetime] = None
+
+
+class GeneralQuestion(BaseModel):
+    """General question model matching the general_questions table."""
+    question_id: Optional[int] = None
+    question: str
+    question_type: str
+    context_for_ai: Optional[str] = None
+    created_at: Optional[datetime] = None
+
+
+class QuestionOption(BaseModel):
+    """Question option model matching the question_options table."""
+    option_id: Optional[int] = None
+    question_id: int
+    option_text: str
+    created_at: Optional[datetime] = None
+
+
+class UserAnswer(BaseModel):
+    """User answer model matching the user_answers table."""
+    answer_id: Optional[int] = None
+    user_id: str
+    question_id: int
+    category_id: Optional[int] = None
+    answer_text: Optional[str] = None
+    option_id: Optional[int] = None
+    created_at: Optional[datetime] = None
+
+
+class UserLearningStyle(BaseModel):
+    """User learning style model matching the user_learning_styles table."""
+    style_id: Optional[int] = None
+    user_id: str
+    learning_style: str
+    preference_level: Optional[int] = Field(None, ge=1, le=5)
+    created_at: Optional[datetime] = None
+
+
+class Path(BaseModel):
+    """Learning path model matching the paths table."""
+    path_id: Optional[int] = None
+    user_id: str
+    category_id: Optional[int] = None
+    title: str
+    description: Optional[str] = None
+    status: Optional[str] = "in-progress"
+    ai_generated: Optional[bool] = True
+    created_at: Optional[datetime] = None
+    updated_at: Optional[datetime] = None
+
+
+class Task(BaseModel):
+    """Task model matching the tasks table."""
+    task_id: Optional[int] = None
+    path_id: int
+    title: str
+    description: Optional[str] = None
+    task_type: str
+    resource_url: str
+    source_platform: str
+    estimated_duration_min: Optional[int] = None
+    status: Optional[str] = "not-started"
+    task_order: int
+    created_at: Optional[datetime] = None
+
+
+class UserTaskFeedback(BaseModel):
+    """User task feedback model matching the user_task_feedback table."""
+    feedback_id: Optional[int] = None
+    user_id: str
+    task_id: int
+    feedback_type: str
+    rating: Optional[int] = Field(None, ge=1, le=5)
+    time_spent_sec: Optional[int] = None
+    comments: Optional[str] = None
+    created_at: Optional[datetime] = None
+
+
+class AIModelLog(BaseModel):
+    """AI model log matching the ai_model_logs table."""
+    log_id: Optional[int] = None
+    user_id: Optional[str] = None
+    input_prompt: Optional[str] = None
+    output_response: Optional[str] = None
+    model_name: Optional[str] = None
+    endpoint: Optional[str] = None
+    created_at: Optional[datetime] = None
+
+
+# API Models for the backend service (original models for path generation)
 class UserProfile(BaseModel):
-    """User profile model for storing user information and learning preferences."""
+    """User profile model for the path generation API."""
     id: Optional[str] = None
     goal: str = Field(..., description="User's learning goal or objective")
     experience_level: ExperienceLevel = Field(..., description="User's current experience level")
     learning_style: LearningStyle = Field(..., description="User's preferred learning style")
     created_at: Optional[datetime] = None
-    
-    class Config:
-        use_enum_values = True
-
-
-class GeneratedPath(BaseModel):
-    """Model for storing generated learning paths."""
-    id: Optional[str] = None
-    user_id: str = Field(..., description="Foreign key to user profile")
-    path_data: Dict[str, Any] = Field(..., description="JSON data containing the learning path")
-    created_at: Optional[datetime] = None
-    
-    class Config:
-        use_enum_values = True
-
-
-class UserFeedback(BaseModel):
-    """Model for storing user feedback on learning resources."""
-    id: Optional[str] = None
-    path_id: str = Field(..., description="Foreign key to generated path")
-    resource_id: str = Field(..., description="ID of the specific resource")
-    interaction_type: InteractionType = Field(..., description="Type of user interaction")
-    rating: Optional[int] = Field(None, ge=1, le=5, description="User rating (1-5 stars)")
-    timestamp: Optional[datetime] = None
-    
-    class Config:
-        use_enum_values = True
-
-
-# API Request/Response Models
-class GeneratePathRequest(BaseModel):
-    """Request model for the generate_path endpoint."""
-    user_profile: UserProfile
-    topic: str = Field(..., description="The topic or subject to learn")
-    duration_preference: Optional[str] = Field(None, description="Preferred duration (e.g., '2 weeks', '1 month')")
-    platform_preferences: Optional[List[Platform]] = Field(None, description="Preferred learning platforms")
     
     class Config:
         use_enum_values = True
@@ -130,6 +216,18 @@ class LearningPath(BaseModel):
     difficulty: ExperienceLevel = Field(..., description="Overall difficulty level")
     steps: List[PathStep] = Field(..., description="Ordered list of learning steps")
     created_at: Optional[datetime] = None
+    
+    class Config:
+        use_enum_values = True
+
+
+# API Request/Response Models
+class GeneratePathRequest(BaseModel):
+    """Request model for the generate_path endpoint."""
+    user_profile: UserProfile
+    topic: str = Field(..., description="The topic or subject to learn")
+    duration_preference: Optional[str] = Field(None, description="Preferred duration (e.g., '2 weeks', '1 month')")
+    platform_preferences: Optional[List[Platform]] = Field(None, description="Preferred learning platforms")
     
     class Config:
         use_enum_values = True
