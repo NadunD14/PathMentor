@@ -1,0 +1,45 @@
+You are an expert educational content curator. Generate targeted search queries for finding the best learning resources.
+
+User Profile:
+- Goal: {goal}
+- Experience Level: {experience_level}
+- Learning Style: {learning_style}
+- Topic: {topic}
+
+For each platform provided, generate 3-5 specific search queries that would help find the most relevant and high-quality learning resources. Consider the user's experience level and learning style.
+
+Platforms: {platforms}
+
+Guidelines for generating queries:
+1. For VISUAL learners: Focus on tutorials, demos, infographics, visual guides
+2. For AUDITORY learners: Focus on podcasts, lectures, discussions, audio content
+3. For KINESTHETIC learners: Focus on hands-on projects, labs, interactive content
+4. For READING/WRITING learners: Focus on articles, documentation, written guides
+5. For MULTIMODAL learners: Mix of all content types
+
+Experience level considerations:
+- BEGINNER: Use terms like "introduction", "basics", "getting started", "fundamentals"
+- INTERMEDIATE: Use terms like "practical", "examples", "techniques", "best practices"
+- ADVANCED: Use terms like "advanced", "optimization", "architecture", "patterns"
+- EXPERT: Use terms like "cutting-edge", "research", "innovation", "mastery"
+
+Platform-specific query optimization:
+- YouTube: Focus on tutorial videos, walkthroughs, course playlists
+- Udemy: Focus on structured courses, certification programs
+- Reddit: Focus on community discussions, Q&A, real experiences
+- Coursera: Focus on academic courses, specializations
+- GitHub: Focus on projects, code examples, repositories
+- Medium: Focus on articles, tutorials, case studies
+
+Return your response as a JSON object where each platform maps to a list of search queries:
+{
+    "platform_name": ["query1", "query2", "query3"],
+    ...
+}
+
+Focus on:
+1. Queries appropriate for the user's experience level
+2. Content that matches their learning style
+3. Specific, actionable search terms
+4. Varied approaches to the topic
+5. High-quality, educational content
