@@ -163,6 +163,9 @@ class AIModelLog(BaseModel):
     endpoint: Optional[str] = None
     created_at: Optional[datetime] = None
 
+    class Config:
+        protected_namespaces = ()
+
 
 # API Models for the backend service (original models for path generation)
 class UserProfile(BaseModel):
@@ -266,15 +269,13 @@ class SearchQuery(BaseModel):
 
 
 class FeedbackRequest(BaseModel):
-    """Request model for submitting user feedback."""
-    path_id: str
-    resource_id: str
-    interaction_type: InteractionType
+    """Request model for submitting user task feedback (matches user_task_feedback schema)."""
+    user_id: str = Field(..., description="ID of the user giving feedback")
+    task_id: int = Field(..., description="ID of the task the feedback is for")
+    feedback_type: Optional[str] = Field(None, description="Type of feedback (e.g., completion, helpful, etc.)")
     rating: Optional[int] = Field(None, ge=1, le=5)
-    comment: Optional[str] = Field(None, description="Optional user comment")
-    
-    class Config:
-        use_enum_values = True
+    time_spent_sec: Optional[int] = Field(None, ge=0, description="Time spent in seconds")
+    comments: Optional[str] = Field(None, description="Additional comments")
 
 
 class FeedbackResponse(BaseModel):

@@ -7,7 +7,7 @@ from typing import List, Dict, Any
 import logging
 from datetime import datetime
 
-from ..database.models import (
+from database.models import (
     GeneratePathRequest,
     GeneratePathResponse,
     UserProfile,
@@ -18,13 +18,13 @@ from ..database.models import (
     SearchQuery,
     PathStep
 )
-from ..database.repositories.user_repo import UserRepository
-from ..database.repositories.feedback_repo import FeedbackRepository
-from ..rl_service.predictor import RLPredictor
-from ..llm_service.client import LLMClient
-from ..scrapers.youtube_client import YouTubeClient
-from ..scrapers.udemy_client import UdemyClient
-from ..scrapers.reddit_scraper import RedditScraper
+from database.repositories.user_repo import UserRepository
+from database.repositories.feedback_repo import FeedbackRepository
+from rl_service.predictor import RLPredictor
+from llm_service.client import LLMClient
+from scrapers.youtube_client import YouTubeClient
+from scrapers.udemy_client import UdemyClient
+from scrapers.reddit_scraper import RedditScraper
 
 # Initialize router
 router = APIRouter(prefix="/api/v1", tags=["learning_paths"])

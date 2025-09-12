@@ -7,7 +7,7 @@ from typing import Optional, Dict, Any
 from datetime import datetime
 
 from ..supabase_client import SupabaseClient
-from ..models import UserProfile, GeneratedPath
+from ..models import UserProfile
 
 logger = logging.getLogger(__name__)
 
@@ -101,7 +101,7 @@ class UserRepository:
             logger.error(f"Error saving learning path: {e}")
             raise
     
-    async def get_learning_path(self, path_id: str) -> Optional[GeneratedPath]:
+    async def get_learning_path(self, path_id: str) -> Optional[dict]:
         """Get a generated learning path by ID."""
         try:
             path_data = await self.supabase.get_generated_path(path_id)
@@ -109,12 +109,7 @@ class UserRepository:
             if not path_data:
                 return None
             
-            return GeneratedPath(
-                id=path_data["id"],
-                user_id=path_data["user_id"],
-                path_data=path_data["path_data"],
-                created_at=datetime.fromisoformat(path_data["created_at"])
-            )
+            return path_data
             
         except Exception as e:
             logger.error(f"Error getting learning path: {e}")

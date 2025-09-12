@@ -9,7 +9,6 @@ import logging
 import os
 from contextlib import asynccontextmanager
 
-from api.endpoints import generate_path, feedback
 from database.supabase_client import SupabaseClient
 
 # Configure logging
@@ -60,9 +59,27 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Include routers
-app.include_router(generate_path.router)
-app.include_router(feedback.router)
+# Include routers; attempt each independently so one bad import doesn't block others
+try:
+    from api.endpoints import ml_setup
+    app.include_router(ml_setup.router)
+    logger.info("Registered ml_setup router")
+except Exception as e:
+    logger.warning(f"Failed to register ml_setup router: {e}")
+
+try:
+    from api.endpoints import feedback
+    app.include_router(feedback.router)
+    logger.info("Registered feedback router")
+except Exception as e:
+    logger.warning(f"Failed to register feedback router: {e}")
+
+try:
+    from api.endpoints import generate_path
+    app.include_router(generate_path.router)
+    logger.info("Registered generate_path router")
+except Exception as e:
+    logger.warning(f"Failed to register generate_path router: {e}")
 
 
 @app.get("/")

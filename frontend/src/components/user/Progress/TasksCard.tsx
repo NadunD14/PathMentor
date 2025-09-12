@@ -3,9 +3,9 @@
 import { useState } from 'react';
 import Card from '@/components/user/shared-authenticated/Card';
 import TaskItem from '@/components/user/shared-authenticated/TaskItem';
-import { PriorityLevel, Task, LearningCategory, useProgressStore } from '@/lib/store/useProgressStore';
+import { PriorityLevel, Task, useProgressStore } from '@/lib/store/useProgressStore';
 
-type FilterOptions = 'all' | LearningCategory | PriorityLevel;
+type FilterOptions = 'all' | string | PriorityLevel;
 
 export default function TasksCard() {
     const { upcomingTasks, completeTask } = useProgressStore();

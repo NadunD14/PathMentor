@@ -7,7 +7,7 @@ from typing import List, Dict, Any
 from datetime import datetime
 
 from ..supabase_client import SupabaseClient
-from ..models import UserFeedback, InteractionType
+from ..models import InteractionType
 
 logger = logging.getLogger(__name__)
 
@@ -19,18 +19,10 @@ class FeedbackRepository:
         """Initialize feedback repository."""
         self.supabase = supabase_client or SupabaseClient()
     
-    async def create_feedback(self, feedback: UserFeedback) -> str:
-        """Create new user feedback."""
+    async def create_feedback(self, feedback: Dict[str, Any]) -> int:
+        """Create new user task feedback (user_task_feedback table)."""
         try:
-            feedback_data = {
-                "path_id": feedback.path_id,
-                "resource_id": feedback.resource_id,
-                "interaction_type": feedback.interaction_type.value,
-                "rating": feedback.rating,
-                "timestamp": feedback.timestamp.isoformat() if feedback.timestamp else datetime.utcnow().isoformat()
-            }
-            
-            feedback_id = await self.supabase.create_feedback(feedback_data)
+            feedback_id = await self.supabase.create_task_feedback(feedback)
             
             logger.info(f"Created feedback with ID: {feedback_id}")
             return feedback_id
@@ -39,49 +31,23 @@ class FeedbackRepository:
             logger.error(f"Error creating feedback: {e}")
             raise
     
-    async def get_feedback_by_path(self, path_id: str) -> List[UserFeedback]:
-        """Get all feedback for a specific learning path."""
+    async def get_task_feedback(self, task_id: int) -> List[Dict[str, Any]]:
+        """Get all feedback for a specific task."""
         try:
-            feedback_data_list = await self.supabase.get_feedback_by_path(path_id)
-            
-            feedback_list = []
-            for feedback_data in feedback_data_list:
-                feedback = UserFeedback(
-                    id=feedback_data["id"],
-                    path_id=feedback_data["path_id"],
-                    resource_id=feedback_data["resource_id"],
-                    interaction_type=InteractionType(feedback_data["interaction_type"]),
-                    rating=feedback_data.get("rating"),
-                    timestamp=datetime.fromisoformat(feedback_data["timestamp"])
-                )
-                feedback_list.append(feedback)
-            
-            logger.info(f"Retrieved {len(feedback_list)} feedback entries for path: {path_id}")
-            return feedback_list
+            feedback_data_list = await self.supabase.get_task_feedback(task_id)
+            logger.info(f"Retrieved {len(feedback_data_list)} feedback entries for task: {task_id}")
+            return feedback_data_list
             
         except Exception as e:
             logger.error(f"Error getting feedback by path: {e}")
             raise
     
-    async def get_feedback_by_resource(self, resource_id: str) -> List[UserFeedback]:
-        """Get all feedback for a specific resource."""
+    async def get_user_feedback(self, user_id: str) -> List[Dict[str, Any]]:
+        """Get all feedback for a user."""
         try:
-            feedback_data_list = await self.supabase.get_feedback_by_resource(resource_id)
-            
-            feedback_list = []
-            for feedback_data in feedback_data_list:
-                feedback = UserFeedback(
-                    id=feedback_data["id"],
-                    path_id=feedback_data["path_id"],
-                    resource_id=feedback_data["resource_id"],
-                    interaction_type=InteractionType(feedback_data["interaction_type"]),
-                    rating=feedback_data.get("rating"),
-                    timestamp=datetime.fromisoformat(feedback_data["timestamp"])
-                )
-                feedback_list.append(feedback)
-            
-            logger.info(f"Retrieved {len(feedback_list)} feedback entries for resource: {resource_id}")
-            return feedback_list
+            feedback_data_list = await self.supabase.get_user_feedback(user_id)
+            logger.info(f"Retrieved {len(feedback_data_list)} feedback entries for user: {user_id}")
+            return feedback_data_list
             
         except Exception as e:
             logger.error(f"Error getting feedback by resource: {e}")

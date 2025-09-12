@@ -7,14 +7,12 @@ from typing import List
 import logging
 from datetime import datetime
 
-from ..database.models import (
+from database.models import (
     FeedbackRequest,
     FeedbackResponse,
-    UserFeedback,
-    InteractionType
 )
-from ..database.repositories.feedback_repo import FeedbackRepository
-from ..dependencies import get_feedback_repository, get_current_user_id
+from database.repositories.feedback_repo import FeedbackRepository
+from api.dependencies import get_feedback_repository
 
 # Initialize router
 router = APIRouter(prefix="/api/v1/feedback", tags=["feedback"])
@@ -27,7 +25,6 @@ logger = logging.getLogger(__name__)
 async def submit_feedback(
     request: FeedbackRequest,
     feedback_repo: FeedbackRepository = Depends(get_feedback_repository),
-    current_user_id: str = Depends(get_current_user_id)
 ) -> FeedbackResponse:
     """
     Submit user feedback for a learning resource.
@@ -36,19 +33,18 @@ async def submit_feedback(
     which helps improve future recommendations and path generation.
     """
     try:
-        logger.info(f"Submitting feedback for resource {request.resource_id} in path {request.path_id}")
+        logger.info(f"Submitting feedback for task {request.task_id} by user {request.user_id}")
         
-        # Create feedback object
-        feedback = UserFeedback(
-            path_id=request.path_id,
-            resource_id=request.resource_id,
-            interaction_type=request.interaction_type,
-            rating=request.rating,
-            timestamp=datetime.utcnow()
-        )
-        
-        # Save feedback to database
-        feedback_id = await feedback_repo.create_feedback(feedback)
+        # Save feedback to database (pass dict matching schema)
+        feedback_id = await feedback_repo.create_feedback({
+            "user_id": request.user_id,
+            "task_id": request.task_id,
+            "feedback_type": request.feedback_type,
+            "rating": request.rating,
+            "time_spent_sec": request.time_spent_sec,
+            "comments": request.comments,
+            "created_at": datetime.utcnow().isoformat()
+        })
         
         logger.info(f"Feedback submitted successfully with ID: {feedback_id}")
         
@@ -66,23 +62,17 @@ async def submit_feedback(
         )
 
 
-@router.get("/path/{path_id}", response_model=List[UserFeedback])
+@router.get("/task/{task_id}")
 async def get_path_feedback(
-    path_id: str,
-    feedback_repo: FeedbackRepository = Depends(get_feedback_repository),
-    current_user_id: str = Depends(get_current_user_id)
-) -> List[UserFeedback]:
-    """
-    Get all feedback for a specific learning path.
-    """
+    task_id: int,
+    feedback_repo: FeedbackRepository = Depends(get_feedback_repository)
+):
+    """Get all feedback for a specific task."""
     try:
-        logger.info(f"Retrieving feedback for path: {path_id}")
-        
-        feedback_list = await feedback_repo.get_feedback_by_path(path_id)
-        
-        logger.info(f"Retrieved {len(feedback_list)} feedback entries for path {path_id}")
-        
-        return feedback_list
+        logger.info(f"Retrieving feedback for task: {task_id}")
+        feedback_list = await feedback_repo.get_task_feedback(task_id)
+        logger.info(f"Retrieved {len(feedback_list)} feedback entries for task {task_id}")
+        return {"items": feedback_list}
         
     except Exception as e:
         logger.error(f"Error retrieving path feedback: {str(e)}")
@@ -92,22 +82,17 @@ async def get_path_feedback(
         )
 
 
-@router.get("/resource/{resource_id}", response_model=List[UserFeedback])
+@router.get("/user/{user_id}")
 async def get_resource_feedback(
-    resource_id: str,
+    user_id: str,
     feedback_repo: FeedbackRepository = Depends(get_feedback_repository)
-) -> List[UserFeedback]:
-    """
-    Get all feedback for a specific resource across all paths.
-    """
+):
+    """Get all feedback provided by a user."""
     try:
-        logger.info(f"Retrieving feedback for resource: {resource_id}")
-        
-        feedback_list = await feedback_repo.get_feedback_by_resource(resource_id)
-        
-        logger.info(f"Retrieved {len(feedback_list)} feedback entries for resource {resource_id}")
-        
-        return feedback_list
+        logger.info(f"Retrieving feedback for user: {user_id}")
+        feedback_list = await feedback_repo.get_user_feedback(user_id)
+        logger.info(f"Retrieved {len(feedback_list)} feedback entries for user {user_id}")
+        return {"items": feedback_list}
         
     except Exception as e:
         logger.error(f"Error retrieving resource feedback: {str(e)}")

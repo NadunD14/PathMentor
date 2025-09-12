@@ -8,6 +8,9 @@ import logging
 from typing import Optional, Dict, Any, List
 from supabase import create_client, Client
 from datetime import datetime
+from dotenv import load_dotenv
+
+load_dotenv()
 
 logger = logging.getLogger(__name__)
 
