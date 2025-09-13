@@ -55,12 +55,9 @@ def get_llm_client() -> LLMClient:
     """Get LLM client dependency."""
     global _llm_client
     if _llm_client is None:
-        api_key = os.getenv("OPENAI_API_KEY")
+        api_key = os.getenv("GROQ_API_KEY")
         if not api_key:
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail="OpenAI API key not configured"
-            )
+            logger.warning("GROQ_API_KEY not set; LLM client will use fallback behavior.")
         _llm_client = LLMClient(api_key=api_key)
     return _llm_client
 

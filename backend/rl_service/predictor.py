@@ -6,7 +6,7 @@ import logging
 from typing import List, Optional
 import random
 
-from ..database.models import UserProfile, PlatformRecommendation, Platform
+from database.models import UserProfile, PlatformRecommendation, Platform
 
 logger = logging.getLogger(__name__)
 

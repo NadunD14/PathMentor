@@ -25,6 +25,12 @@ from llm_service.client import LLMClient
 from scrapers.youtube_client import YouTubeClient
 from scrapers.udemy_client import UdemyClient
 from scrapers.reddit_scraper import RedditScraper
+from api.dependencies import (
+    get_user_repository,
+    get_feedback_repository,
+    get_rl_predictor,
+    get_llm_client,
+)
 
 # Initialize router
 router = APIRouter(prefix="/api/v1", tags=["learning_paths"])
@@ -32,23 +38,27 @@ router = APIRouter(prefix="/api/v1", tags=["learning_paths"])
 # Initialize logger
 logger = logging.getLogger(__name__)
 
-# Initialize services (these would normally be dependency injected)
-rl_predictor = RLPredictor()
-llm_client = LLMClient()
-youtube_client = YouTubeClient()
-udemy_client = UdemyClient()
-reddit_scraper = RedditScraper()
+# Dependency-injected services
+def get_youtube_client() -> YouTubeClient:
+    return YouTubeClient()
 
-# Initialize repositories
-user_repo = UserRepository()
-feedback_repo = FeedbackRepository()
+def get_udemy_client() -> UdemyClient:
+    return UdemyClient()
+
+def get_reddit_scraper() -> RedditScraper:
+    return RedditScraper()
 
 
 @router.post("/generate-path", response_model=GeneratePathResponse)
 async def generate_learning_path(
     request: GeneratePathRequest,
-    user_repo: UserRepository = Depends(),
-    feedback_repo: FeedbackRepository = Depends()
+    user_repo: UserRepository = Depends(get_user_repository),
+    feedback_repo: FeedbackRepository = Depends(get_feedback_repository),
+    rl_predictor: RLPredictor = Depends(get_rl_predictor),
+    llm_client: LLMClient = Depends(get_llm_client),
+    youtube_client: YouTubeClient = Depends(get_youtube_client),
+    udemy_client: UdemyClient = Depends(get_udemy_client),
+    reddit_scraper: RedditScraper = Depends(get_reddit_scraper),
 ) -> GeneratePathResponse:
     """
     Generate a personalized learning path based on user profile and preferences.
@@ -70,23 +80,23 @@ async def generate_learning_path(
         
         # Step 2: Get platform recommendations from RL service
         platform_recommendations = await _get_platform_recommendations(
-            user_profile, request.topic, request.platform_preferences
+            user_profile, request.topic, rl_predictor, request.platform_preferences
         )
         logger.info(f"Received {len(platform_recommendations)} platform recommendations")
         
         # Step 3: Generate search queries using LLM service
         search_queries = await _generate_search_queries(
-            user_profile, platform_recommendations, request.topic
+            user_profile, platform_recommendations, request.topic, llm_client
         )
         logger.info(f"Generated {sum(len(queries) for queries in search_queries.values())} search queries")
         
         # Step 4: Fetch resources from external APIs
-        resources = await _fetch_resources(search_queries)
+        resources = await _fetch_resources(search_queries, youtube_client, udemy_client, reddit_scraper)
         logger.info(f"Fetched {len(resources)} resources from external APIs")
         
         # Step 5: Synthesize learning path using LLM service
         learning_path = await _synthesize_learning_path(
-            resources, user_profile, request.topic, request.duration_preference
+            resources, user_profile, request.topic, llm_client, request.duration_preference
         )
         logger.info(f"Synthesized learning path with {len(learning_path.steps)} steps")
         
@@ -127,6 +137,7 @@ async def _save_user_profile(user_profile: UserProfile, user_repo: UserRepositor
 async def _get_platform_recommendations(
     user_profile: UserProfile,
     topic: str,
+    rl_predictor: RLPredictor,
     platform_preferences: List[Platform] = None
 ) -> List[PlatformRecommendation]:
     """Get platform recommendations from the RL service."""
@@ -152,7 +163,8 @@ async def _get_platform_recommendations(
 async def _generate_search_queries(
     user_profile: UserProfile,
     platform_recommendations: List[PlatformRecommendation],
-    topic: str
+    topic: str,
+    llm_client: LLMClient
 ) -> Dict[str, List[str]]:
     """Generate search queries using the LLM service."""
     try:
@@ -171,7 +183,12 @@ async def _generate_search_queries(
         raise HTTPException(status_code=500, detail="Failed to generate search queries")
 
 
-async def _fetch_resources(search_queries: Dict[str, List[str]]) -> List[Resource]:
+async def _fetch_resources(
+    search_queries: Dict[str, List[str]],
+    youtube_client: YouTubeClient,
+    udemy_client: UdemyClient,
+    reddit_scraper: RedditScraper,
+) -> List[Resource]:
     """Fetch resources from external APIs using the appropriate scrapers."""
     resources = []
     
@@ -218,6 +235,7 @@ async def _synthesize_learning_path(
     resources: List[Resource],
     user_profile: UserProfile,
     topic: str,
+    llm_client: LLMClient,
     duration_preference: str = None
 ) -> LearningPath:
     """Synthesize a structured learning path using the LLM service."""

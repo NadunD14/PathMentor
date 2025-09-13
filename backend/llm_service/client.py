@@ -1,5 +1,6 @@
 """
 LLM service client for generating search queries and synthesizing learning paths.
+Updated to use Groq Cloud instead of OpenAI.
 """
 
 import json
@@ -7,9 +8,9 @@ import logging
 from typing import List, Dict, Any, Optional
 from pathlib import Path
 import asyncio
-from openai import AsyncOpenAI
+import httpx
 
-from ..database.models import (
+from database.models import (
     UserProfile,
     Resource,
     PathStep,
@@ -24,20 +25,21 @@ logger = logging.getLogger(__name__)
 
 class LLMClient:
     """
-    Client for interacting with OpenAI API to generate search queries
+    Client for interacting with Groq Cloud API to generate search queries
     and synthesize learning paths.
     """
     
-    def __init__(self, api_key: Optional[str] = None, model: str = "gpt-4"):
+    def __init__(self, api_key: Optional[str] = None, model: str = "llama3-8b-8192"):
         """
         Initialize the LLM client.
         
         Args:
-            api_key: OpenAI API key (if None, will use environment variable)
-            model: OpenAI model to use for generation
+            api_key: Groq API key (if None, will use environment variable)
+            model: Groq model to use for generation
         """
-        self.client = AsyncOpenAI(api_key=api_key)
+        self.api_key = api_key
         self.model = model
+        self.base_url = "https://api.groq.com/openai/v1"
         self.prompts_dir = Path(__file__).parent / "prompts"
         
         # Load prompt templates
@@ -159,25 +161,36 @@ Ensure each step builds upon previous ones and the path flows naturally."""
                 platforms=", ".join(platforms)
             )
             
-            # Call OpenAI API
-            response = await self.client.chat.completions.create(
-                model=self.model,
-                messages=[
-                    {
-                        "role": "system",
-                        "content": "You are an expert educational content curator. Always respond with valid JSON."
+            # Call Groq API
+            async with httpx.AsyncClient() as client:
+                response = await client.post(
+                    f"{self.base_url}/chat/completions",
+                    headers={
+                        "Authorization": f"Bearer {self.api_key}",
+                        "Content-Type": "application/json"
                     },
-                    {
-                        "role": "user",
-                        "content": prompt
-                    }
-                ],
-                temperature=0.7,
-                max_tokens=1000
-            )
+                    json={
+                        "model": self.model,
+                        "messages": [
+                            {
+                                "role": "system",
+                                "content": "You are an expert educational content curator. Always respond with valid JSON."
+                            },
+                            {
+                                "role": "user",
+                                "content": prompt
+                            }
+                        ],
+                        "temperature": 0.7,
+                        "max_tokens": 1000
+                    },
+                    timeout=30.0
+                )
+                response.raise_for_status()
+                result = response.json()
             
             # Parse the JSON response
-            response_text = response.choices[0].message.content
+            response_text = result["choices"][0]["message"]["content"]
             queries_dict = json.loads(response_text)
             
             # Validate and clean the response
@@ -228,25 +241,36 @@ Ensure each step builds upon previous ones and the path flows naturally."""
                 resources=resources_text
             )
             
-            # Call OpenAI API
-            response = await self.client.chat.completions.create(
-                model=self.model,
-                messages=[
-                    {
-                        "role": "system",
-                        "content": "You are an expert learning path designer. Always respond with valid JSON array."
+            # Call Groq API
+            async with httpx.AsyncClient() as client:
+                response = await client.post(
+                    f"{self.base_url}/chat/completions",
+                    headers={
+                        "Authorization": f"Bearer {self.api_key}",
+                        "Content-Type": "application/json"
                     },
-                    {
-                        "role": "user",
-                        "content": prompt
-                    }
-                ],
-                temperature=0.6,
-                max_tokens=2000
-            )
+                    json={
+                        "model": self.model,
+                        "messages": [
+                            {
+                                "role": "system",
+                                "content": "You are an expert learning path designer. Always respond with valid JSON array."
+                            },
+                            {
+                                "role": "user",
+                                "content": prompt
+                            }
+                        ],
+                        "temperature": 0.6,
+                        "max_tokens": 2000
+                    },
+                    timeout=30.0
+                )
+                response.raise_for_status()
+                result = response.json()
             
             # Parse the JSON response
-            response_text = response.choices[0].message.content
+            response_text = result["choices"][0]["message"]["content"]
             steps_data = json.loads(response_text)
             
             # Convert to PathStep objects

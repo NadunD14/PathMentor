@@ -56,37 +56,41 @@ class BackendAPITester:
     async def test_generate_path(self):
         """Test learning path generation endpoint."""
         print("\n🛤️ Testing learning path generation...")
-        
-        # Test data
+
+        # Build request matching backend GeneratePathRequest schema
         test_request = {
-            "user_id": f"test_user_{datetime.now().timestamp()}",
-            "learning_goal": "Learn Python programming from basics to advanced",
-            "difficulty_level": "beginner",
-            "time_commitment": 60,
-            "preferred_platforms": ["youtube", "udemy"],
-            "learning_style": ["visual", "hands-on"]
+            "user_profile": {
+                "goal": "Learn Python programming from basics to advanced",
+                "experience_level": "beginner",
+                "learning_style": "visual"
+            },
+            "topic": "Python programming",
+            "duration_preference": "2 weeks",
+            "platform_preferences": ["youtube", "udemy"]
         }
-        
+
         try:
             async with self.session.post(
-                f"{self.base_url}/api/generate-path",
+                f"{self.base_url}/api/v1/generate-path",
                 json=test_request
             ) as response:
-                
+
                 if response.status == 200:
                     data = await response.json()
-                    print(f"✅ Path generated successfully!")
+                    print("✅ Path generated successfully!")
                     print(f"   - Path ID: {data.get('path_id')}")
-                    print(f"   - Title: {data.get('title', 'N/A')}")
-                    print(f"   - Steps: {len(data.get('steps', []))}")
-                    print(f"   - Duration: {data.get('estimated_duration', 'N/A')} minutes")
+                    lp = data.get('learning_path') or {}
+                    print(f"   - Title: {lp.get('title', 'N/A')}")
+                    steps = lp.get('steps', [])
+                    print(f"   - Steps: {len(steps)}")
+                    print(f"   - Total Duration: {lp.get('total_duration', 'N/A')}")
                     return data
                 else:
                     error_text = await response.text()
                     print(f"❌ Path generation failed: {response.status}")
                     print(f"   Error: {error_text}")
                     return None
-                    
+
         except Exception as e:
             print(f"❌ Path generation error: {e}")
             return None
@@ -100,18 +104,17 @@ class BackendAPITester:
             path_id = f"test_path_{datetime.now().timestamp()}"
         
         test_feedback = {
-            "user_id": f"test_user_{datetime.now().timestamp()}",
-            "path_id": path_id,
-            "step_index": 0,
-            "feedback_type": "helpful",
+            "user_id": f"test_user_{int(datetime.now().timestamp())}",
+            "task_id": 1,  # Use a valid task ID for the schema
+            "feedback_type": "completion",
             "rating": 5,
-            "comment": "This step was very helpful and well-explained!",
-            "time_spent": 25
+            "comments": "This task was very helpful and well-explained!",
+            "time_spent_sec": 1500
         }
         
         try:
             async with self.session.post(
-                f"{self.base_url}/api/feedback",
+                f"{self.base_url}/api/v1/feedback/submit",
                 json=test_feedback
             ) as response:
                 

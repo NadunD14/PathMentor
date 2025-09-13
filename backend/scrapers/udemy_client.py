@@ -8,7 +8,7 @@ from typing import List, Optional
 import aiohttp
 import base64
 
-from ..database.models import Resource, Platform, ExperienceLevel
+from database.models import Resource, Platform, ExperienceLevel
 
 logger = logging.getLogger(__name__)
 
