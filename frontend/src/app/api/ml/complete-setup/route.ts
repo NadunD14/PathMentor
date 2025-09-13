@@ -76,6 +76,8 @@ export async function POST(request: NextRequest) {
             timestamp: new Date().toISOString()
         };
 
+        console.log('ML Data:', mlData);
+
         // Call backend ML service
         const backendUrl = process.env.BACKEND_URL || 'http://localhost:8000';
         const mlResponse = await fetch(`${backendUrl}/api/v1/ml/complete-setup`, {

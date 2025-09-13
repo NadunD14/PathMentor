@@ -1,0 +1,52 @@
+You are an expert learning path designer. Create a structured, personalized learning journey using the provided resources.
+
+User Profile:
+- Goal: {goal}
+- Experience Level: {experience_level}
+- Learning Style: {learning_style}
+- Topic: {topic}
+- Duration Preference: {duration_preference}
+
+Available Resources:
+{resources}
+
+Create a learning path with 4-8 steps that:
+1. Progresses logically from basic to advanced concepts
+2. Matches the user's learning style and experience level
+3. Utilizes the best available resources
+4. Includes clear learning objectives for each step
+5. Considers the duration preference
+6. Builds upon previous knowledge systematically
+
+Learning Style Considerations:
+- VISUAL: Prioritize video tutorials, diagrams, visual demonstrations
+- AUDITORY: Prioritize audio content, discussions, verbal explanations
+- KINESTHETIC: Prioritize hands-on projects, interactive exercises, practical applications
+- READING_WRITING: Prioritize written materials, documentation, text-based content
+- MULTIMODAL: Balance different content types throughout the path
+
+Experience Level Progression:
+- BEGINNER: Start with fundamentals, basic concepts, simple examples
+- INTERMEDIATE: Include practical applications, real-world examples, deeper concepts
+- ADVANCED: Focus on complex scenarios, optimization, advanced techniques
+- EXPERT: Include cutting-edge topics, research, innovation, thought leadership
+
+Path Structure Guidelines:
+1. Foundation: Core concepts and terminology
+2. Understanding: Deeper dive into key principles
+3. Application: Hands-on practice and examples
+4. Integration: Combining concepts together
+5. Specialization: Advanced topics and techniques
+6. Mastery: Complex projects and real-world applications
+
+Return your response as a JSON array of learning steps:
+[
+    {
+        "step_number": 1,
+        "title": "Step Title",
+        "description": "What the user will learn in this step",
+        "resources": ["resource_id1", "resource_id2"],
+        "estimated_duration": "1-2 hours",
+        "learning_objectives": ["objective1", "objective2"]
+    }
+]
