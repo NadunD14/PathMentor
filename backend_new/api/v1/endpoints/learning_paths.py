@@ -8,6 +8,7 @@ from datetime import datetime
 
 from models.schemas import (
     GeneratePathRequest,
+    GeneratePathFromUserRequest,
     GeneratePathResponse,
     UserProfile,
     LearningPath,
@@ -197,6 +198,157 @@ async def generate_learning_path(
         )
 
 
+@router.post("/generate-from-user", response_model=GeneratePathResponse)
+async def generate_learning_path_from_user(
+    request: GeneratePathFromUserRequest,
+    user_repo: UserRepository = Depends(get_user_repository),
+    path_repo: PathRepository = Depends(get_path_repository),
+    task_repo: TaskRepository = Depends(get_task_repository),
+    llm_service: LLMService = Depends(get_llm_service),
+    ml_predictor: MLPredictor = Depends(get_ml_predictor),
+    youtube_scraper: YouTubeScraper = Depends(get_youtube_scraper),
+    udemy_scraper: UdemyScraper = Depends(get_udemy_scraper),
+    reddit_scraper: RedditScraper = Depends(get_reddit_scraper)
+):
+    """
+    Generate a personalized learning path from user ID and category ID.
+    
+    This endpoint:
+    1. Fetches user data and category information from database
+    2. Creates user profile from the fetched data
+    3. Uses the existing path generation logic
+    """
+    try:
+        logger.info(f"Generating learning path for user {request.user_id}, category {request.category_id}")
+        
+        # Step 1: Fetch user data and create profile
+        user_data = await _fetch_user_complete_data(request.user_id, request.category_id, user_repo)
+        
+        if not user_data:
+            return GeneratePathResponse(
+                success=False,
+                message="User data not found or incomplete",
+                learning_path=None
+            )
+        
+        # Step 2: Create user profile from fetched data
+        user_profile = await _create_user_profile_from_data(user_data)
+        topic = user_data.get('category_info', {}).get('name', 'General Skills')
+        
+        # Step 3: Use existing path generation logic
+        # Get platform recommendations
+        platform_recommendations = await ml_predictor.predict_platforms(
+            user_profile=user_profile,
+            topic=topic,
+            platform_preferences=request.platform_preferences
+        )
+        
+        # Extract top platforms
+        top_platforms = [rec.platform for rec in platform_recommendations[:3]]
+        logger.info(f"Recommended platforms: {[p.value for p in top_platforms]}")
+        
+        # Generate search queries
+        search_queries = await llm_service.generate_search_queries(
+            user_profile=user_profile,
+            topic=topic,
+            platforms=top_platforms
+        )
+        
+        # Fetch resources from different platforms
+        all_resources = []
+        
+        # YouTube resources
+        if Platform.YOUTUBE in top_platforms:
+            youtube_queries = [q.query for q in search_queries if q.platform == Platform.YOUTUBE]
+            for query in youtube_queries[:2]:
+                youtube_resources = await youtube_scraper.search_videos(query, max_results=3)
+                all_resources.extend(youtube_resources)
+        
+        # Udemy resources
+        if Platform.UDEMY in top_platforms:
+            udemy_queries = [q.query for q in search_queries if q.platform == Platform.UDEMY]
+            for query in udemy_queries[:2]:
+                udemy_resources = await udemy_scraper.search_courses(query, max_results=3)
+                all_resources.extend(udemy_resources)
+        
+        # Reddit resources
+        if Platform.REDDIT in top_platforms:
+            reddit_queries = [q.query for q in search_queries if q.platform == Platform.REDDIT]
+            for query in reddit_queries[:1]:
+                reddit_resources = await reddit_scraper.search_posts(query, max_results=2)
+                all_resources.extend(reddit_resources)
+        
+        logger.info(f"Found {len(all_resources)} total resources")
+        
+        if not all_resources:
+            return GeneratePathResponse(
+                success=False,
+                message="No resources found for the given topic. Please try a different topic or check your internet connection.",
+                learning_path=None
+            )
+        
+        # Synthesize learning path
+        learning_path = await llm_service.synthesize_learning_path(
+            user_profile=user_profile,
+            topic=topic,
+            resources=all_resources,
+            duration_preference=request.duration_preference
+        )
+        
+        # Save path to database
+        path_id = None
+        try:
+            path_data = {
+                "user_id": request.user_id,
+                "category_id": request.category_id,
+                "title": learning_path.title,
+                "description": learning_path.description,
+                "status": "in-progress",
+                "ai_generated": True
+            }
+            
+            # Save path
+            saved_path = await path_repo.create_path(path_data)
+            path_id = str(saved_path.get("path_id"))
+            
+            # Save tasks for each step
+            for step in learning_path.steps:
+                for resource in step.resources:
+                    task_data = {
+                        "path_id": saved_path["path_id"],
+                        "title": resource.title,
+                        "description": resource.description or step.description,
+                        "task_type": "resource",
+                        "resource_url": resource.url,
+                        "source_platform": resource.platform.value,
+                        "estimated_duration_min": _parse_duration_to_minutes(resource.duration),
+                        "status": "not-started",
+                        "task_order": step.step_number
+                    }
+                    await task_repo.create_task(task_data)
+            
+            logger.info(f"Saved learning path with ID: {path_id}")
+            
+        except Exception as e:
+            logger.error(f"Error saving path to database: {e}")
+            # Continue without saving if database save fails
+        
+        return GeneratePathResponse(
+            success=True,
+            learning_path=learning_path,
+            message=f"Successfully generated learning path for {topic}",
+            path_id=path_id
+        )
+        
+    except Exception as e:
+        logger.error(f"Error generating learning path from user: {e}")
+        return GeneratePathResponse(
+            success=False,
+            message=f"Failed to generate learning path: {str(e)}",
+            learning_path=None
+        )
+
+
 @router.get("/user/{user_id}", response_model=List[Dict[str, Any]])
 async def get_user_paths(
     user_id: str,
@@ -262,3 +414,65 @@ def _parse_duration_to_minutes(duration_str: str) -> int:
             return 30
     else:
         return 30  # Default
+
+
+async def _fetch_user_complete_data(user_id: str, category_id: int, user_repo: UserRepository) -> dict:
+    """Fetch all user data needed for path generation from database."""
+    try:
+        # Use the repository method to fetch complete user data
+        user_data = await user_repo.get_user_complete_data(user_id, category_id)
+        return user_data
+        
+    except Exception as e:
+        logger.error(f"Error fetching user complete data: {e}")
+        return None
+
+
+async def _create_user_profile_from_data(user_data: dict) -> UserProfile:
+    """Create UserProfile object from fetched user data."""
+    try:
+        from models.schemas import ExperienceLevel, LearningStyle
+        
+        # Analyze user answers to determine experience level and learning style
+        # This is simplified logic - in reality would use ML analysis
+        
+        # Default values
+        experience_level = ExperienceLevel.BEGINNER
+        learning_style = LearningStyle.VISUAL
+        
+        # Analyze learning styles from user data
+        if user_data.get('learning_styles'):
+            # Get the learning style with highest preference level
+            top_style = max(user_data['learning_styles'], key=lambda x: x.get('preference_level', 0))
+            style_name = top_style.get('learning_style', '').lower()
+            
+            # Map to enum values
+            if 'visual' in style_name:
+                learning_style = LearningStyle.VISUAL
+            elif 'auditory' in style_name:
+                learning_style = LearningStyle.AUDITORY
+            elif 'kinesthetic' in style_name:
+                learning_style = LearningStyle.KINESTHETIC
+            elif 'reading' in style_name or 'writing' in style_name:
+                learning_style = LearningStyle.READING_WRITING
+            elif 'multimodal' in style_name:
+                learning_style = LearningStyle.MULTIMODAL
+        
+        # Analyze experience level from user answers
+        # This would typically involve ML analysis of answers
+        # For now, use simple heuristics or default
+        
+        category_name = user_data.get('category_info', {}).get('name', 'General Skills')
+        
+        user_profile = UserProfile(
+            id=user_data["user_id"],
+            goal=f"Learn {category_name}",
+            experience_level=experience_level,
+            learning_style=learning_style
+        )
+        
+        return user_profile
+        
+    except Exception as e:
+        logger.error(f"Error creating user profile from data: {e}")
+        raise

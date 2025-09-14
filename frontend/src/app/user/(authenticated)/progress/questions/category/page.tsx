@@ -22,6 +22,7 @@ export default function CategoryQuestionsPage() {
     const [loading, setLoading] = useState<boolean>(true);
     const [error, setError] = useState<string | null>(null);
     const [session, setSession] = useState<Session | null>(null);
+    const [questionToCategoryMap, setQuestionToCategoryMap] = useState<Record<number, number>>({});
 
     useEffect(() => {
         // Get session and redirect back to category selection if no category selected
@@ -29,7 +30,7 @@ export default function CategoryQuestionsPage() {
             try {
                 const currentSession = await getSession();
                 setSession(currentSession);
-                
+
                 if (!currentSession) {
                     router.push('/user/login');
                     return;
@@ -55,12 +56,23 @@ export default function CategoryQuestionsPage() {
                 if (!response.ok) {
                     throw new Error('Failed to fetch category questions');
                 }
-                
+
                 const { questions } = await response.json();
-                
+
                 // Extract the general_questions from the nested structure
                 const formattedQuestions = questions.map((item: any) => item.general_questions).filter(Boolean);
                 setCategoryQuestions(formattedQuestions);
+
+                // Build a map from general question_id -> category_question_id for saving answers
+                const map: Record<number, number> = {};
+                questions.forEach((item: any) => {
+                    const qid = item?.general_questions?.question_id;
+                    const cqid = item?.category_question_id;
+                    if (qid && cqid) {
+                        map[qid] = cqid;
+                    }
+                });
+                setQuestionToCategoryMap(map);
             } catch (error) {
                 console.error('Error fetching category questions:', error);
                 setError('Failed to load questions');
@@ -87,23 +99,29 @@ export default function CategoryQuestionsPage() {
         try {
             // Save all answers to the backend
             for (const [questionId, value] of Object.entries(answers)) {
+                const numericQuestionId = parseInt(questionId);
+                const categoryQuestionId = questionToCategoryMap[numericQuestionId];
+                if (!categoryQuestionId) {
+                    console.warn('Missing category_question_id mapping for general question id:', numericQuestionId);
+                    continue; // Skip if mapping isn't available
+                }
                 const answer = {
                     user_id: session.user.id, // Use actual user ID from session
                     answer_text: typeof value === 'string' ? value : undefined,
                     option_id: typeof value === 'number' ? value : undefined,
                 };
 
-                saveAnswer(parseInt(questionId), answer);
+                saveAnswer(numericQuestionId, answer);
 
                 // Save to backend
-                await fetch('/api/answers', {
+                await fetch('/api/category-answers', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                     },
                     body: JSON.stringify({
                         userId: session.user.id, // Use actual user ID from session
-                        questionId: parseInt(questionId),
+                        categoryQuestionId,
                         answerText: answer.answer_text,
                         optionId: answer.option_id,
                     }),
@@ -162,7 +180,7 @@ export default function CategoryQuestionsPage() {
                         <label className="block text-sm font-medium text-gray-700 mb-2">
                             {question.question}
                         </label>
-                        
+
                         {question.question_options && question.question_options.length > 0 ? (
                             // Multiple choice question
                             <div className="space-y-2">

@@ -5,6 +5,25 @@ import { useRouter } from 'next/navigation';
 import PageHeader from '@/components/user/shared/PageHeader';
 import { useQuestionnaireStore } from '@/lib/store/useQuestionnaireStore';
 import { getSession } from '@/lib/auth';
+import { CategoryService } from '@/lib/services/categoryService';
+
+
+async function getSingleCategoryId(categoryId: number) {
+    try {
+        const category = await CategoryService.getCategoryById(categoryId);
+        if (!category) {
+            console.log(`Category with ID ${categoryId} not found`);
+            return null;
+        }
+        return category.category_id;
+    } catch (error) {
+        console.error(`Failed to fetch category ID ${categoryId}:`, error);
+        return null;
+    }
+}
+
+// Note: We no longer need to derive categoryId here; the API route
+// will look up the latest selected category for the user in Supabase.
 
 export default function CompleteQuestionnairePage() {
     const router = useRouter();
@@ -181,8 +200,8 @@ export default function CompleteQuestionnairePage() {
                         onClick={handleStartLearning}
                         disabled={isProcessing}
                         className={`flex-1 px-6 py-3 rounded-lg font-medium text-white text-center ${isProcessing
-                                ? 'bg-gray-400 cursor-not-allowed'
-                                : 'bg-blue-600 hover:bg-blue-700'
+                            ? 'bg-gray-400 cursor-not-allowed'
+                            : 'bg-blue-600 hover:bg-blue-700'
                             }`}
                     >
                         {isProcessing ? 'Processing...' : 'Start Learning Journey'}
@@ -191,8 +210,8 @@ export default function CompleteQuestionnairePage() {
                         onClick={handleRetakeQuestionnaire}
                         disabled={isProcessing}
                         className={`flex-1 px-6 py-3 border border-gray-300 rounded-lg font-medium text-center ${isProcessing
-                                ? 'text-gray-400 cursor-not-allowed'
-                                : 'text-gray-700 hover:bg-gray-50'
+                            ? 'text-gray-400 cursor-not-allowed'
+                            : 'text-gray-700 hover:bg-gray-50'
                             }`}
                     >
                         Retake Questionnaire

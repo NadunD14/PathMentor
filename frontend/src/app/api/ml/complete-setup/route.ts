@@ -12,71 +12,36 @@ export async function POST(request: NextRequest) {
             );
         }
 
-        // Fetch user's answers from Supabase
-        const { data: userAnswers, error: answersError } = await supabase
-            .from('user_answers')
-            .select(`
-                answer_id,
-                question_id,
-                answer_text,
-                option_id,
-                category_id,
-                created_at,
-                general_questions (
-                    question_id,
-                    question,
-                    question_type
-                ),
-                question_options (
-                    option_id,
-                    option_text
-                )
-            `)
-            .eq('user_id', userId)
-            .order('created_at', { ascending: false });
-
-        if (answersError) {
-            console.error('Error fetching user answers:', answersError);
-            return NextResponse.json(
-                { error: 'Failed to fetch user answers' },
-                { status: 500 }
-            );
-        }
-
-        // Fetch user's selected categories
-        const { data: userCategories, error: categoriesError } = await supabase
+        // Look up the user's most recent selected category from Supabase
+        const { data: selection, error: selectionError } = await supabase
             .from('user_category_selections')
-            .select(`
-                selection_id,
-                category_id,
-                created_at,
-                categories (
-                    category_id,
-                    name,
-                    description,
-                    image_url
-                )
-            `)
+            .select('category_id, created_at')
             .eq('user_id', userId)
-            .order('created_at', { ascending: false });
+            .order('created_at', { ascending: false })
+            .limit(1)
+            .single();
 
-        if (categoriesError) {
-            console.error('Error fetching user categories:', categoriesError);
+        if (selectionError) {
+            console.error('Error fetching user category selection:', selectionError);
             return NextResponse.json(
-                { error: 'Failed to fetch user categories' },
+                { error: 'Failed to fetch user category selection' },
                 { status: 500 }
             );
         }
 
-        // Prepare data for backend ML service
+        if (!selection?.category_id) {
+            return NextResponse.json(
+                { error: 'No category selected for this user' },
+                { status: 400 }
+            );
+        }
+
         const mlData = {
             user_id: userId,
-            answers: userAnswers || [],
-            selected_categories: userCategories || [],
-            timestamp: new Date().toISOString()
+            category_id: selection.category_id,
         };
 
-        console.log('ML Data:', mlData);
+        console.log('ML Data (derived):', mlData);
 
         // Call backend ML service
         const backendUrl = process.env.BACKEND_URL || 'http://localhost:8000';
