@@ -60,6 +60,15 @@ def get_reddit_scraper() -> RedditScraper:
     return RedditScraper()
 
 
+# Helpers
+def _platform_to_str(p) -> str:
+    """Return platform as string whether it's an Enum or already a string."""
+    try:
+        # Enum-like objects have a 'value' attribute
+        return p.value  # type: ignore[attr-defined]
+    except Exception:
+        return str(p)
+
 @router.post("/generate", response_model=GeneratePathResponse)
 async def generate_learning_path(
     request: GeneratePathRequest,
@@ -94,7 +103,7 @@ async def generate_learning_path(
         
         # Extract top platforms
         top_platforms = [rec.platform for rec in platform_recommendations[:3]]
-        logger.info(f"Recommended platforms: {[p.value for p in top_platforms]}")
+        logger.info(f"Recommended platforms: {[ _platform_to_str(p) for p in top_platforms ]}")
         
         # Step 2: Generate search queries
         search_queries = await llm_service.generate_search_queries(
@@ -105,24 +114,25 @@ async def generate_learning_path(
         
         # Step 3: Fetch resources from different platforms
         all_resources = []
+        top_platform_names = { _platform_to_str(p) for p in top_platforms }
         
         # YouTube resources
-        if Platform.YOUTUBE in top_platforms:
-            youtube_queries = [q.query for q in search_queries if q.platform == Platform.YOUTUBE]
+        if Platform.YOUTUBE.value in top_platform_names or "youtube" in top_platform_names:
+            youtube_queries = [q.query for q in search_queries if _platform_to_str(q.platform) == Platform.YOUTUBE.value]
             for query in youtube_queries[:2]:  # Limit queries per platform
                 youtube_resources = await youtube_scraper.search_videos(query, max_results=3)
                 all_resources.extend(youtube_resources)
         
         # Udemy resources
-        if Platform.UDEMY in top_platforms:
-            udemy_queries = [q.query for q in search_queries if q.platform == Platform.UDEMY]
+        if Platform.UDEMY.value in top_platform_names or "udemy" in top_platform_names:
+            udemy_queries = [q.query for q in search_queries if _platform_to_str(q.platform) == Platform.UDEMY.value]
             for query in udemy_queries[:2]:
                 udemy_resources = await udemy_scraper.search_courses(query, max_results=3)
                 all_resources.extend(udemy_resources)
         
         # Reddit resources
-        if Platform.REDDIT in top_platforms:
-            reddit_queries = [q.query for q in search_queries if q.platform == Platform.REDDIT]
+        if Platform.REDDIT.value in top_platform_names or "reddit" in top_platform_names:
+            reddit_queries = [q.query for q in search_queries if _platform_to_str(q.platform) == Platform.REDDIT.value]
             for query in reddit_queries[:1]:
                 reddit_resources = await reddit_scraper.search_posts(query, max_results=2)
                 all_resources.extend(reddit_resources)
@@ -169,7 +179,7 @@ async def generate_learning_path(
                             "description": resource.description or step.description,
                             "task_type": "resource",
                             "resource_url": resource.url,
-                            "source_platform": resource.platform.value,
+                            "source_platform": _platform_to_str(resource.platform),
                             "estimated_duration_min": _parse_duration_to_minutes(resource.duration),
                             "status": "not-started",
                             "task_order": step.step_number
@@ -233,7 +243,8 @@ async def generate_learning_path_from_user(
         
         # Step 2: Create user profile from fetched data
         user_profile = await _create_user_profile_from_data(user_data)
-        topic = user_data.get('category_info', {}).get('name', 'General Skills')
+        # Prefer the normalized field from complete profile; fall back to nested if present
+        topic = user_data.get('category_name') or user_data.get('category_info', {}).get('name', 'General Skills')
         
         # Step 3: Use existing path generation logic
         # Get platform recommendations
@@ -245,7 +256,7 @@ async def generate_learning_path_from_user(
         
         # Extract top platforms
         top_platforms = [rec.platform for rec in platform_recommendations[:3]]
-        logger.info(f"Recommended platforms: {[p.value for p in top_platforms]}")
+        logger.info(f"Recommended platforms: {[ _platform_to_str(p) for p in top_platforms ]}")
         
         # Generate search queries
         search_queries = await llm_service.generate_search_queries(
@@ -256,24 +267,25 @@ async def generate_learning_path_from_user(
         
         # Fetch resources from different platforms
         all_resources = []
+        top_platform_names = { _platform_to_str(p) for p in top_platforms }
         
         # YouTube resources
-        if Platform.YOUTUBE in top_platforms:
-            youtube_queries = [q.query for q in search_queries if q.platform == Platform.YOUTUBE]
+        if Platform.YOUTUBE.value in top_platform_names or "youtube" in top_platform_names:
+            youtube_queries = [q.query for q in search_queries if _platform_to_str(q.platform) == Platform.YOUTUBE.value]
             for query in youtube_queries[:2]:
                 youtube_resources = await youtube_scraper.search_videos(query, max_results=3)
                 all_resources.extend(youtube_resources)
         
         # Udemy resources
-        if Platform.UDEMY in top_platforms:
-            udemy_queries = [q.query for q in search_queries if q.platform == Platform.UDEMY]
+        if Platform.UDEMY.value in top_platform_names or "udemy" in top_platform_names:
+            udemy_queries = [q.query for q in search_queries if _platform_to_str(q.platform) == Platform.UDEMY.value]
             for query in udemy_queries[:2]:
                 udemy_resources = await udemy_scraper.search_courses(query, max_results=3)
                 all_resources.extend(udemy_resources)
         
         # Reddit resources
-        if Platform.REDDIT in top_platforms:
-            reddit_queries = [q.query for q in search_queries if q.platform == Platform.REDDIT]
+        if Platform.REDDIT.value in top_platform_names or "reddit" in top_platform_names:
+            reddit_queries = [q.query for q in search_queries if _platform_to_str(q.platform) == Platform.REDDIT.value]
             for query in reddit_queries[:1]:
                 reddit_resources = await reddit_scraper.search_posts(query, max_results=2)
                 all_resources.extend(reddit_resources)
@@ -320,7 +332,7 @@ async def generate_learning_path_from_user(
                         "description": resource.description or step.description,
                         "task_type": "resource",
                         "resource_url": resource.url,
-                        "source_platform": resource.platform.value,
+                        "source_platform": _platform_to_str(resource.platform),
                         "estimated_duration_min": _parse_duration_to_minutes(resource.duration),
                         "status": "not-started",
                         "task_order": step.step_number
@@ -419,8 +431,8 @@ def _parse_duration_to_minutes(duration_str: str) -> int:
 async def _fetch_user_complete_data(user_id: str, category_id: int, user_repo: UserRepository) -> dict:
     """Fetch all user data needed for path generation from database."""
     try:
-        # Use the repository method to fetch complete user data
-        user_data = await user_repo.get_user_complete_data(user_id, category_id)
+        # Use the repository method to fetch complete user profile (new API)
+        user_data = await user_repo.get_user_complete_profile(user_id, category_id)
         return user_data
         
     except Exception as e:
@@ -462,7 +474,7 @@ async def _create_user_profile_from_data(user_data: dict) -> UserProfile:
         # This would typically involve ML analysis of answers
         # For now, use simple heuristics or default
         
-        category_name = user_data.get('category_info', {}).get('name', 'General Skills')
+        category_name = user_data.get('category_name') or user_data.get('category_info', {}).get('name', 'General Skills')
         
         user_profile = UserProfile(
             id=user_data["user_id"],

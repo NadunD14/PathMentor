@@ -6,7 +6,7 @@ from fastapi import APIRouter, HTTPException, Depends
 from typing import Dict, Any
 from datetime import datetime
 
-from models.schemas import MLCompleteSetupRequest, MLCompleteSetupResponse
+from models.schemas import MLCompleteSetupRequest, MLCompleteSetupResponse, GeneratePathFromUserRequest, UserProfile, ExperienceLevel, LearningStyle
 from database.repositories import UserRepository
 from core.logging import get_logger
 
@@ -55,9 +55,12 @@ async def complete_ml_setup(
 
         logger.info(f"user_profile: {user_profile}")
         
+        # After ML analysis, automatically generate learning path
+        path_result = await _generate_learning_path_for_user(request.user_id, request.category_id, user_profile)
+        
         return MLCompleteSetupResponse(
             success=True,
-            message="ML setup completed successfully",
+            message="ML setup completed successfully and learning path generated",
             analysis=analysis_result,
             user_profile=user_profile
         )
@@ -114,3 +117,49 @@ async def _create_user_profile(user_data: Dict[str, Any], analysis: Dict[str, An
     except Exception as e:
         logger.error(f"Error creating user profile: {e}")
         raise
+
+
+async def _generate_learning_path_for_user(user_id: str, category_id: int, user_profile: Dict[str, Any]) -> Dict[str, Any]:
+    """Generate learning path using the learning paths endpoint."""
+    try:
+        # Import here to avoid circular imports
+        from .learning_paths import generate_learning_path_from_user
+        from database.repositories import PathRepository, TaskRepository
+        from services import LLMService, MLPredictor, YouTubeScraper, UdemyScraper, RedditScraper
+        
+        # Create dependencies
+        user_repo = UserRepository()
+        path_repo = PathRepository()
+        task_repo = TaskRepository()
+        llm_service = LLMService()
+        ml_predictor = MLPredictor()
+        youtube_scraper = YouTubeScraper()
+        udemy_scraper = UdemyScraper()
+        reddit_scraper = RedditScraper()
+        
+        # Create request object
+        request = GeneratePathFromUserRequest(
+            user_id=user_id,
+            category_id=category_id,
+            duration_preference="flexible"
+        )
+        
+        # Call the learning path generation endpoint
+        result = await generate_learning_path_from_user(
+            request=request,
+            user_repo=user_repo,
+            path_repo=path_repo,
+            task_repo=task_repo,
+            llm_service=llm_service,
+            ml_predictor=ml_predictor,
+            youtube_scraper=youtube_scraper,
+            udemy_scraper=udemy_scraper,
+            reddit_scraper=reddit_scraper
+        )
+        
+        logger.info(f"Learning path generation result: {result.success}")
+        return {"success": result.success, "message": result.message, "path_id": result.path_id}
+        
+    except Exception as e:
+        logger.error(f"Error generating learning path: {e}")
+        return {"success": False, "message": f"Failed to generate learning path: {str(e)}"}

@@ -94,29 +94,44 @@ class YouTubeScraper:
     
     def _mock_youtube_results(self, query: str, max_results: int) -> List[Resource]:
         """Generate mock YouTube results when API is not available."""
-        mock_videos = [
-            f"{query} - Complete Tutorial",
-            f"Learn {query} in 10 Minutes",
-            f"{query} for Beginners",
-            f"Advanced {query} Techniques",
-            f"{query} Project Tutorial",
-            f"{query} Step by Step Guide",
-            f"Master {query} - Full Course",
-            f"{query} Tips and Tricks"
-        ]
+        query_lower = query.lower()
+        
+        # Software Engineering specific content
+        if "software" in query_lower or "engineering" in query_lower:
+            mock_videos = [
+                "Software Engineering Fundamentals - Complete Course",
+                "How to Become a Software Engineer in 2024",
+                "Software Design Patterns Explained",
+                "Clean Code Principles for Beginners",
+                "Git and GitHub Tutorial for Software Engineers",
+                "Object-Oriented Programming in Practice",
+                "Software Architecture Patterns",
+                "Agile Development Methodology Explained"
+            ]
+        else:
+            mock_videos = [
+                f"{query} - Complete Tutorial",
+                f"Learn {query} in 10 Minutes",
+                f"{query} for Beginners",
+                f"Advanced {query} Techniques",
+                f"{query} Project Tutorial",
+                f"{query} Step by Step Guide",
+                f"Master {query} - Full Course",
+                f"{query} Tips and Tricks"
+            ]
         
         resources = []
         for i, title in enumerate(mock_videos[:max_results]):
             resource = Resource(
                 id=f"mock_yt_{i}",
                 title=title,
-                description=f"A comprehensive tutorial about {query}",
+                description=f"A comprehensive tutorial about {query}" if "software" not in query_lower else "Learn software engineering concepts with practical examples and hands-on coding",
                 url=f"https://www.youtube.com/watch?v=mock_{i}",
                 platform=Platform.YOUTUBE,
                 duration=self._estimate_duration(title),
                 difficulty=self._estimate_difficulty(title),
-                rating=4.0 + (i % 10) * 0.1,
-                tags=[query.lower(), "tutorial", "video"]
+                rating=4.2 + (i % 8) * 0.1,
+                tags=[query.lower(), "tutorial", "video", "programming"] if "software" in query_lower else [query.lower(), "tutorial", "video"]
             )
             resources.append(resource)
         

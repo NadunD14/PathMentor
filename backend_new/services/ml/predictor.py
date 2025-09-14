@@ -79,44 +79,62 @@ class MLPredictor:
     ) -> Dict[str, Dict[str, Any]]:
         """Calculate platform scores based on user profile and topic."""
         
+        # Base scores for Software Engineering (from the user data)
         scores = {
-            "youtube": {"score": 0.5, "reasoning": "Good for visual learning"},
-            "udemy": {"score": 0.5, "reasoning": "Structured courses available"},
-            "reddit": {"score": 0.3, "reasoning": "Community discussions"},
-            "coursera": {"score": 0.4, "reasoning": "Academic content"},
-            "github": {"score": 0.3, "reasoning": "Code examples and projects"},
-            "medium": {"score": 0.4, "reasoning": "Articles and tutorials"}
+            "youtube": {"score": 0.7, "reasoning": "Great for visual learning with coding tutorials"},
+            "udemy": {"score": 0.8, "reasoning": "Comprehensive Software Engineering courses"},
+            "reddit": {"score": 0.4, "reasoning": "Developer community discussions and Q&A"},
+            "coursera": {"score": 0.6, "reasoning": "University-level SE courses"},
+            "github": {"score": 0.9, "reasoning": "Essential for software engineers - code examples and projects"},
+            "medium": {"score": 0.7, "reasoning": "High-quality technical articles and SE best practices"}
         }
         
-        # Adjust scores based on learning style
+        # Enhance scores based on Software Engineering specialization
+        topic_lower = topic.lower()
+        if "software" in topic_lower or "engineering" in topic_lower:
+            scores["github"]["score"] = 0.95
+            scores["github"]["reasoning"] = "Critical for SE - real projects, code review, collaboration"
+            scores["udemy"]["score"] = 0.85
+            scores["udemy"]["reasoning"] = "Excellent SE bootcamps and practical courses"
+            scores["medium"]["score"] = 0.8
+            scores["medium"]["reasoning"] = "Software engineering blogs, best practices, industry insights"
+        
+        # Adjust scores based on learning style (user has 'visual' preference)
         if user_profile.learning_style == "visual":
-            scores["youtube"]["score"] += 0.3
-            scores["youtube"]["reasoning"] = "Excellent for visual learners with video content"
-        elif user_profile.learning_style == "auditory":
             scores["youtube"]["score"] += 0.2
-            scores["udemy"]["score"] += 0.2
+            scores["youtube"]["reasoning"] = "Perfect for visual learners - coding screencasts and demos"
+            scores["github"]["score"] += 0.1  # Visual code examples
+        elif user_profile.learning_style == "auditory":
+            scores["youtube"]["score"] += 0.15
+            scores["udemy"]["score"] += 0.15
         elif user_profile.learning_style == "kinesthetic":
-            scores["github"]["score"] += 0.3
-            scores["github"]["reasoning"] = "Hands-on coding projects"
+            scores["github"]["score"] += 0.2
+            scores["github"]["reasoning"] = "Hands-on coding and project-based learning"
         elif user_profile.learning_style == "reading_writing":
-            scores["medium"]["score"] += 0.3
-            scores["medium"]["reasoning"] = "Rich written content and tutorials"
+            scores["medium"]["score"] += 0.2
+            scores["medium"]["reasoning"] = "In-depth technical articles and documentation"
         else:  # multimodal
             # Boost all platforms slightly
             for platform in scores:
                 scores[platform]["score"] += 0.1
         
-        # Adjust scores based on experience level
+        # Adjust scores based on experience level (user is 'beginner')
         if user_profile.experience_level == "beginner":
-            scores["youtube"]["score"] += 0.2
-            scores["udemy"]["score"] += 0.2
+            scores["youtube"]["score"] += 0.15
+            scores["youtube"]["reasoning"] += " - beginner-friendly tutorials"
+            scores["udemy"]["score"] += 0.15
+            scores["udemy"]["reasoning"] += " - structured learning paths for beginners"
+            # Slightly reduce github for complete beginners
+            scores["github"]["score"] -= 0.1
+            scores["github"]["reasoning"] = "Good for learning from examples, start with simple projects"
         elif user_profile.experience_level == "advanced":
-            scores["github"]["score"] += 0.2
-            scores["medium"]["score"] += 0.2
+            scores["github"]["score"] += 0.1
+            scores["medium"]["score"] += 0.15
+            scores["reddit"]["score"] += 0.1
         
-        # Add some randomness to prevent always getting the same results
+        # Add slight randomness but keep it realistic
         for platform in scores:
-            scores[platform]["score"] += random.uniform(-0.1, 0.1)
+            scores[platform]["score"] += random.uniform(-0.05, 0.05)
             scores[platform]["score"] = max(0.1, min(1.0, scores[platform]["score"]))
         
         return scores

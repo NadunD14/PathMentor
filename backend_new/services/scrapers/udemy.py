@@ -43,29 +43,48 @@ class UdemyScraper:
     
     def _mock_udemy_results(self, query: str, max_results: int) -> List[Resource]:
         """Generate mock Udemy course results."""
-        mock_courses = [
-            f"The Complete {query} Course 2024",
-            f"{query} Masterclass - From Zero to Hero",
-            f"Learn {query} - The Complete Guide",
-            f"{query} for Beginners - Step by Step",
-            f"Advanced {query} - Professional Level",
-            f"{query} Bootcamp - Become an Expert",
-            f"Practical {query} - Real World Projects",
-            f"{query} Fundamentals - Build Strong Foundation"
-        ]
+        query_lower = query.lower()
+        
+        # Software Engineering specific courses
+        if "software" in query_lower or "engineering" in query_lower:
+            mock_courses = [
+                "The Complete Software Engineering Bootcamp 2024",
+                "Software Design Patterns Masterclass",
+                "Clean Code and Software Architecture",
+                "Agile Software Development - Scrum & Kanban",
+                "Object-Oriented Programming and Design",
+                "Software Testing - From Beginner to Expert",
+                "Database Design for Software Engineers",
+                "DevOps for Software Engineers - Complete Guide"
+            ]
+        else:
+            mock_courses = [
+                f"The Complete {query} Course 2024",
+                f"{query} Masterclass - From Zero to Hero",
+                f"Learn {query} - The Complete Guide",
+                f"{query} for Beginners - Step by Step",
+                f"Advanced {query} - Professional Level",
+                f"{query} Bootcamp - Become an Expert",
+                f"Practical {query} - Real World Projects",
+                f"{query} Fundamentals - Build Strong Foundation"
+            ]
         
         resources = []
         for i, title in enumerate(mock_courses[:max_results]):
+            description = f"Comprehensive {query} course with hands-on projects and practical examples. Learn from industry experts."
+            if "software" in query_lower:
+                description = "Master software engineering principles with real-world projects, industry best practices, and career guidance from experienced software engineers."
+            
             resource = Resource(
                 id=f"udemy_mock_{i}",
                 title=title,
-                description=f"Comprehensive {query} course with hands-on projects and practical examples. Learn from industry experts.",
+                description=description,
                 url=f"https://www.udemy.com/course/mock-{query.lower().replace(' ', '-')}-{i}",
                 platform=Platform.UDEMY,
                 duration=self._estimate_course_duration(title),
                 difficulty=self._estimate_difficulty(title),
-                rating=4.2 + (i % 8) * 0.1,
-                tags=[query.lower(), "course", "certification", "practical"]
+                rating=4.3 + (i % 7) * 0.1,
+                tags=[query.lower(), "course", "certification", "practical", "programming"] if "software" in query_lower else [query.lower(), "course", "certification", "practical"]
             )
             resources.append(resource)
         
