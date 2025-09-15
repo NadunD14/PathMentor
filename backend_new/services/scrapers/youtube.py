@@ -37,10 +37,7 @@ class YouTubeScraper:
         """Search for YouTube videos."""
         try:
             logger.info(f"Searching YouTube for: {query}")
-            
-            if not self.api_key:
-                return self._mock_youtube_results(query, max_results)
-            
+
             async with aiohttp.ClientSession() as session:
                 params = {
                     "part": "snippet",
@@ -60,11 +57,9 @@ class YouTubeScraper:
                         return self._parse_youtube_results(data)
                     else:
                         logger.error(f"YouTube API error: {response.status}")
-                        return self._mock_youtube_results(query, max_results)
                         
         except Exception as e:
             logger.error(f"Error searching YouTube: {e}")
-            return self._mock_youtube_results(query, max_results)
     
     def _parse_youtube_results(self, data: dict) -> List[Resource]:
         """Parse YouTube API response into Resource objects."""
@@ -88,51 +83,6 @@ class YouTubeScraper:
                 tags=self._extract_tags(snippet)
             )
             
-            resources.append(resource)
-        
-        return resources
-    
-    def _mock_youtube_results(self, query: str, max_results: int) -> List[Resource]:
-        """Generate mock YouTube results when API is not available."""
-        query_lower = query.lower()
-        
-        # Software Engineering specific content
-        if "software" in query_lower or "engineering" in query_lower:
-            mock_videos = [
-                "Software Engineering Fundamentals - Complete Course",
-                "How to Become a Software Engineer in 2024",
-                "Software Design Patterns Explained",
-                "Clean Code Principles for Beginners",
-                "Git and GitHub Tutorial for Software Engineers",
-                "Object-Oriented Programming in Practice",
-                "Software Architecture Patterns",
-                "Agile Development Methodology Explained"
-            ]
-        else:
-            mock_videos = [
-                f"{query} - Complete Tutorial",
-                f"Learn {query} in 10 Minutes",
-                f"{query} for Beginners",
-                f"Advanced {query} Techniques",
-                f"{query} Project Tutorial",
-                f"{query} Step by Step Guide",
-                f"Master {query} - Full Course",
-                f"{query} Tips and Tricks"
-            ]
-        
-        resources = []
-        for i, title in enumerate(mock_videos[:max_results]):
-            resource = Resource(
-                id=f"mock_yt_{i}",
-                title=title,
-                description=f"A comprehensive tutorial about {query}" if "software" not in query_lower else "Learn software engineering concepts with practical examples and hands-on coding",
-                url=f"https://www.youtube.com/watch?v=mock_{i}",
-                platform=Platform.YOUTUBE,
-                duration=self._estimate_duration(title),
-                difficulty=self._estimate_difficulty(title),
-                rating=4.2 + (i % 8) * 0.1,
-                tags=[query.lower(), "tutorial", "video", "programming"] if "software" in query_lower else [query.lower(), "tutorial", "video"]
-            )
             resources.append(resource)
         
         return resources

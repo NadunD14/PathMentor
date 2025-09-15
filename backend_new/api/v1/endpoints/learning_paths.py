@@ -333,6 +333,7 @@ async def generate_learning_path_from_user(
                         "description": resource.description or step.description,
                         "task_type": "resource",
                         "resource_url": resource.url,
+                        "task_link": resource.url,
                         "source_platform": _platform_to_str(resource.platform),
                         "estimated_duration_min": _parse_duration_to_minutes(resource.duration),
                         "status": "not-started",
