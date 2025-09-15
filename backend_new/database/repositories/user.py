@@ -310,11 +310,6 @@ class UserRepository(BaseRepository):
 
     # DEPRECATED: Use get_user_complete_profile instead
     async def get_user_complete_data(self, user_id: str, category_id: int) -> Optional[Dict[str, Any]]:
-        """
-        DEPRECATED: Use get_user_complete_profile instead.
-        Get complete user data for ML processing.
-        """
-        logger.warning("get_user_complete_data is deprecated. Use get_user_complete_profile instead.")
         
         try:
             # Get user basic info
