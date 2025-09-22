@@ -7,13 +7,15 @@ import LearningTypeAssessment from '@/components/user/LearnMe/LearningTypeAssess
 import LearningTypeResult from '@/components/user/LearnMe/LearningTypeAssessment/LearningTypeResult';
 import { useLearningTypeStore } from '@/lib/store/useLearningTypeStore';
 import { learningTypeService } from '@/lib/services/learningTypeService';
+import { learningStyleService } from '@/lib/services/learningStyleService';
+import { useAuth } from '@/contexts/AuthContext';
 import { LearningType } from '@/lib/types/learningTypes';
 
 export default function LearnMePage() {
     const searchParams = useSearchParams();
-    const explainId = searchParams.get('explain');
+    const explainId = searchParams?.get('explain');
     const [currentView, setCurrentView] = useState<'intro' | 'assessment' | 'result'>('intro');
-    const [userId] = useState('user-123'); // In real app, get from auth context
+    const { user } = useAuth();
 
     const { userProfile } = useLearningTypeStore();
 
@@ -28,7 +30,18 @@ export default function LearnMePage() {
         setCurrentView('assessment');
     };
 
-    const handleAssessmentComplete = (learningType: LearningType) => {
+    const handleAssessmentComplete = async (learningType: LearningType) => {
+        try {
+            // Save learning style to backend if user is authenticated
+            if (user?.id) {
+                await learningStyleService.saveLearningStyle(user.id, learningType);
+                console.log('Learning style saved successfully');
+            }
+        } catch (error) {
+            console.error('Failed to save learning style:', error);
+            // Don't prevent showing results even if saving fails
+        }
+
         setCurrentView('result');
     };
 
@@ -162,8 +175,8 @@ export default function LearnMePage() {
     };
 
     return (
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
-            <PageHeader
+        <div className="container-custom py-6 sm:py-8">
+            {/* <PageHeader
                 title="Learn Me"
                 subtitle={
                     currentView === 'assessment'
@@ -172,12 +185,12 @@ export default function LearnMePage() {
                             ? "Your personalized learning type results"
                             : "Discover how you learn best with our comprehensive assessment"
                 }
-            />
+            /> */}
 
             {currentView === 'intro' && renderIntroView()}
             {currentView === 'assessment' && (
                 <LearningTypeAssessment
-                    userId={userId}
+                    userId={user?.id || 'anonymous'}
                     onComplete={handleAssessmentComplete}
                 />
             )}

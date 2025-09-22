@@ -43,7 +43,7 @@ export default function AboutPage() {
         <div className="bg-white min-h-screen">
             {/* Hero Section */}
             <div className="bg-gradient-to-r from-blue-600 to-indigo-800">
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-12">
+                <div className="container-custom py-16 sm:py-20">
                     <h1 className="text-4xl font-extrabold tracking-tight text-white md:text-4xl">
                         About PathMentor
                     </h1>
@@ -60,7 +60,7 @@ export default function AboutPage() {
 
             {/* Tab Navigation */}
             <div className="bg-white">
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div className="container-custom">
                     <div className="border-b border-gray-200">
                         <nav className="-mb-px flex space-x-8">
                             {tabs.map((tab) => (
@@ -85,7 +85,7 @@ export default function AboutPage() {
             {/* Mission Content */}
             {activeTab === 'mission' && (
                 <div className="py-16 bg-white overflow-hidden">
-                    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                    <div className="container-custom">
                         <div className="lg:grid lg:grid-cols-2 lg:gap-8">
                             <div>
                                 <h2 className="text-3xl font-extrabold text-gray-900 sm:text-4xl">
@@ -153,7 +153,7 @@ export default function AboutPage() {
             {/* Team Content */}
             {activeTab === 'team' && (
                 <div className="py-16 bg-white overflow-hidden">
-                    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                    <div className="container-custom">
                         <div className="text-center">
                             <h2 className="text-3xl font-extrabold text-gray-900 sm:text-4xl">
                                 Meet Our Team
@@ -200,7 +200,7 @@ export default function AboutPage() {
             {/* Technology Content */}
             {activeTab === 'technology' && (
                 <div className="py-16 bg-white overflow-hidden">
-                    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                    <div className="container-custom">
                         <div className="lg:grid lg:grid-cols-2 lg:gap-8">
                             <div>
                                 <h2 className="text-3xl font-extrabold text-gray-900 sm:text-4xl">
@@ -308,7 +308,7 @@ export default function AboutPage() {
 
             {/* Call to Action */}
             <div className="bg-blue-700">
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 lg:py-16 lg:flex lg:items-center lg:justify-between">
+                <div className="container-custom py-12 lg:py-16 lg:flex lg:items-center lg:justify-between">
                     <h2 className="text-3xl font-extrabold tracking-tight text-white sm:text-4xl">
                         <span className="block">Ready to transform your learning journey?</span>
                         <span className="block text-blue-200">Start with PathMentor today.</span>

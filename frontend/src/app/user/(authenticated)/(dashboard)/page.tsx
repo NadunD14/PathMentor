@@ -8,11 +8,11 @@ import PageHeader from '@/components/user/shared/PageHeader';
 
 export default function DashboardPage() {
     return (
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
-            <PageHeader
+        <div className="container-custom py-6 sm:py-8">
+            {/* <PageHeader
                 title="Dashboard"
                 subtitle="Overview of your learning journey"
-            />
+            /> */}
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">
                 <div className="lg:col-span-1 space-y-6">

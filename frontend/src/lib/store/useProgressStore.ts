@@ -18,6 +18,7 @@ export interface CategoryProgress {
     lessonsDone: number;
     totalLessons: number;
     timeSpent: number; // minutes
+    pathId?: number; // Add pathId to link to specific path
 }
 
 export interface TimeMetrics {

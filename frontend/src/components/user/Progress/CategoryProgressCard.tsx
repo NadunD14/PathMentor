@@ -22,6 +22,10 @@ export default function CategoryProgressCard() {
 
     const handleCategoryClick = (category: CategoryProgress) => {
         setSelectedCategory(category);
+        // Navigate to the path page for this category
+        if (category.pathId) {
+            router.push(`/user/progress/path?pathId=${category.pathId}`);
+        }
     };
 
     return (
@@ -30,14 +34,21 @@ export default function CategoryProgressCard() {
                 {categories.map((category: CategoryProgress) => (
                     <div
                         key={category.category}
-                        className={`cursor-pointer p-3 rounded-lg ${selectedCategory?.category === category.category
-                            ? 'bg-blue-50 border border-blue-200'
-                            : 'hover:bg-gray-50'
-                            }`}
+                        className={`cursor-pointer p-4 rounded-xl transition-all duration-300 glass-card ${selectedCategory?.category === category.category
+                            ? 'glass-card-blue border-blue-300 shadow-lg'
+                            : 'hover:shadow-lg hover:scale-[1.02]'
+                            } ${category.pathId ? 'hover:border-blue-300' : ''}`}
                         onClick={() => handleCategoryClick(category)}
                     >
                         <div className="flex justify-between items-center mb-2">
-                            <h4 className="font-medium">{category.name}</h4>
+                            <div className="flex items-center gap-2">
+                                <h4 className="font-medium">{category.name}</h4>
+                                {category.pathId && (
+                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4 text-blue-600">
+                                        <path fillRule="evenodd" d="M3 10a.75.75 0 01.75-.75h10.638L10.23 5.29a.75.75 0 111.04-1.08l5.5 5.25a.75.75 0 010 1.08l-5.5 5.25a.75.75 0 11-1.04-1.08l4.158-3.96H3.75A.75.75 0 013 10z" clipRule="evenodd" />
+                                    </svg>
+                                )}
+                            </div>
                             <span className="text-sm text-gray-500">
                                 {category.lessonsDone}/{category.totalLessons} lessons
                             </span>
@@ -61,21 +72,24 @@ export default function CategoryProgressCard() {
             </div>
 
             {categories.length === 0 && (
-                <div className="text-center py-6 text-gray-500">
-                    <p>No learning categories yet.</p>
-                    <button className="mt-2 text-blue-600 hover:text-blue-800">
-                        Start a new learning path
-                    </button>
+                <div className="text-center py-8 text-gray-500">
+                    <div className="glass-card p-6 rounded-xl">
+                        <p className="text-lg mb-3">No learning categories yet.</p>
+                        <button className="btn-primary px-6 py-3 rounded-xl font-medium"
+                            onClick={() => router.push('/user/progress/questions')}>
+                            Start your first learning path
+                        </button>
+                    </div>
                 </div>
             )}
 
             {categories.length > 0 && (
                 <div className="mt-4 text-center">
                     <button
-                        className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium"
+                        className="btn-primary px-6 py-3 rounded-xl font-medium transition-all duration-300"
                         onClick={() => router.push('/user/progress/questions')}
                     >
-                        Start New
+                        Start New Path
                     </button>
                 </div>
             )}

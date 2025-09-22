@@ -98,7 +98,7 @@ export default function FaqPage() {
         <div className="bg-gray-50 min-h-screen">
             {/* Hero bar */}
             <div className="bg-gradient-to-r from-blue-600 to-indigo-800">
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-18">
+                <div className="container-custom py-16 sm:py-20">
                     <h1 className="text-3xl md:text-4xl font-extrabold text-white tracking-tight">Frequently Asked Questions</h1>
                     <p className="mt-2 max-w-2xl text-indigo-100">
                         Find answers to common questions. Still stuck? Contact our support team.
@@ -111,7 +111,7 @@ export default function FaqPage() {
                 </div>
             </div>
 
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
+            <div className="container-custom py-6 sm:py-8">
 
                 {/* Search */}
                 <div className="max-w-xl mx-auto">

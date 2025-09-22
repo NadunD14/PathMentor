@@ -29,8 +29,8 @@ export default function ProgressPage() {
     }, [setProgressData]);
 
     return (
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
-            <PageHeader title="My Progress" subtitle="Track your learning across categories and tasks" />
+        <div className="container-custom py-6 sm:py-8">
+            {/* <PageHeader title="My Progress" subtitle="Track your learning across categories and tasks" /> */}
 
             {loading ? (
                 <div className="py-10 text-center text-gray-500">Loading your progress…</div>

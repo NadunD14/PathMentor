@@ -139,7 +139,7 @@ export default function CategoryQuestionsPage() {
 
     if (loading) {
         return (
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
+            <div className="container-custom py-6 sm:py-8">
                 <PageHeader
                     title="Category Specific Questions"
                     subtitle={`Questions specific to ${selectedCategory}`}
@@ -151,7 +151,7 @@ export default function CategoryQuestionsPage() {
 
     if (error) {
         return (
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
+            <div className="container-custom py-6 sm:py-8">
                 <PageHeader
                     title="Category Specific Questions"
                     subtitle={`Questions specific to ${selectedCategory}`}
@@ -168,49 +168,69 @@ export default function CategoryQuestionsPage() {
     }
 
     return (
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
+        <div className="container-custom py-6 sm:py-8">
             <PageHeader
                 title="Category Specific Questions"
                 subtitle={`Additional questions about ${selectedCategory}`}
             />
 
-            <form onSubmit={handleSubmit} className="mt-8 space-y-8 max-w-3xl mx-auto">
-                {categoryQuestions.map((question: Question) => (
-                    <div key={question.question_id}>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                            {question.question}
-                        </label>
+            <form onSubmit={handleSubmit} className="mt-8 space-y-6 max-w-3xl mx-auto">
+                {categoryQuestions.map((question: Question, idx: number) => (
+                    <div key={question.question_id} className="rounded-2xl border border-gray-200 bg-white p-5 sm:p-6 shadow-sm">
+                        <div className="flex items-start justify-between gap-4">
+                            <label className="block text-base sm:text-lg font-semibold text-gray-900">
+                                {idx + 1}. {question.question}
+                            </label>
+                        </div>
 
                         {question.question_options && question.question_options.length > 0 ? (
-                            // Multiple choice question
-                            <div className="space-y-2">
-                                {question.question_options.map((option) => (
-                                    <div key={option.option_id} className="flex items-center">
-                                        <input
-                                            id={`q${question.question_id}_o${option.option_id}`}
-                                            type="radio"
-                                            name={`question_${question.question_id}`}
-                                            value={option.option_id}
-                                            className="h-4 w-4 text-blue-600 border-gray-300"
-                                            onChange={(e) => handleInputChange(question.question_id, parseInt(e.target.value))}
-                                            checked={answers[question.question_id] === option.option_id}
-                                        />
-                                        <label htmlFor={`q${question.question_id}_o${option.option_id}`} className="ml-2 text-sm text-gray-700">
-                                            {option.option_text}
+                            <div className="mt-4 grid grid-cols-1 gap-3">
+                                {question.question_options.map((option) => {
+                                    const checked = answers[question.question_id] === option.option_id;
+                                    return (
+                                        <label
+                                            key={option.option_id}
+                                            htmlFor={`q${question.question_id}_o${option.option_id}`}
+                                            className={`flex cursor-pointer items-center justify-between rounded-xl border p-3.5 transition ${checked
+                                                ? 'border-blue-600 bg-blue-50'
+                                                : 'border-gray-200 hover:border-gray-300'
+                                                }`}
+                                        >
+                                            <span className="flex items-center gap-3 text-sm text-gray-900">
+                                                <span className={`inline-flex h-4 w-4 items-center justify-center rounded-full border ${checked ? 'border-blue-600' : 'border-gray-300'
+                                                    }`}>
+                                                    <span className={`h-2.5 w-2.5 rounded-full ${checked ? 'bg-blue-600' : 'bg-transparent'
+                                                        }`} />
+                                                </span>
+                                                {option.option_text}
+                                            </span>
+                                            <input
+                                                id={`q${question.question_id}_o${option.option_id}`}
+                                                type="radio"
+                                                name={`question_${question.question_id}`}
+                                                value={option.option_id}
+                                                className="sr-only"
+                                                onChange={(e) => handleInputChange(question.question_id, parseInt(e.target.value))}
+                                                checked={checked}
+                                            />
                                         </label>
-                                    </div>
-                                ))}
+                                    );
+                                })}
                             </div>
                         ) : (
-                            // Text input question
-                            <textarea
-                                rows={3}
-                                className="block w-full rounded-md border border-gray-300 shadow-sm p-3"
-                                placeholder="Enter your answer..."
-                                value={answers[question.question_id] || ''}
-                                onChange={(e) => handleInputChange(question.question_id, e.target.value)}
-                                required
-                            />
+                            <div className="mt-4">
+                                <div className="relative">
+                                    <textarea
+                                        rows={4}
+                                        className="block w-full rounded-xl border border-gray-200 bg-white p-4 text-sm text-gray-900 shadow-sm placeholder:text-gray-400 focus:border-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-100"
+                                        placeholder="Type your answer here..."
+                                        value={answers[question.question_id] || ''}
+                                        onChange={(e) => handleInputChange(question.question_id, e.target.value)}
+                                        required
+                                    />
+                                </div>
+                                <p className="mt-2 text-xs text-gray-500">Share specifics related to {selectedCategory}.</p>
+                            </div>
                         )}
                     </div>
                 ))}
@@ -222,7 +242,7 @@ export default function CategoryQuestionsPage() {
                     </div>
                 )}
 
-                <div className="flex justify-between pt-6">
+                <div className="flex justify-between pt-4">
                     <button
                         type="button"
                         className="px-6 py-3 border border-gray-300 rounded-lg font-medium text-gray-700 hover:bg-gray-50"

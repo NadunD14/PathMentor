@@ -60,13 +60,13 @@ export default function PricingPage() {
         <div className="bg-gray-50 min-h-screen">
             {/* Hero bar */}
             <div className="bg-gradient-to-r from-blue-600 to-indigo-800">
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-26">
+                <div className="container-custom py-16 sm:py-24">
                     <h1 className="text-3xl md:text-4xl font-extrabold text-white tracking-tight">Choose the right plan for your journey</h1>
                     <p className="mt-2 max-w-2xl text-indigo-100">Start for free, then upgrade to unlock premium features that accelerate your learning.</p>
                 </div>
             </div>
 
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
+            <div className="container-custom py-6 sm:py-8">
 
                 <div className="mt-12 flex justify-center">
                     <div className="relative bg-white rounded-lg p-0.5 flex">

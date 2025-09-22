@@ -12,6 +12,7 @@ export interface CategoryProgress {
     lessonsDone: number;
     totalLessons: number;
     timeSpent: number; // minutes
+    pathId?: number; // Add pathId to link to specific path
 }
 
 export interface TimeMetrics {
@@ -112,12 +113,12 @@ export class ProgressService {
 
         // 4) Build categories summary
         // Group tasks by category via paths
-        const categoriesMap = new Map<string, { name: string; total: number; done: number; timeSpent: number }>();
+        const categoriesMap = new Map<string, { name: string; total: number; done: number; timeSpent: number; pathId: number }>();
         for (const p of paths) {
             const name = p.category?.name ?? 'Uncategorized';
             const key = name;
             if (!categoriesMap.has(key)) {
-                categoriesMap.set(key, { name, total: 0, done: 0, timeSpent: 0 });
+                categoriesMap.set(key, { name, total: 0, done: 0, timeSpent: 0, pathId: p.path_id });
             }
             const entry = categoriesMap.get(key)!;
             const tasks = p.tasks ?? [];
@@ -135,9 +136,20 @@ export class ProgressService {
         // If we had feedback time, prefer that per category
         if (!feedbackErr && feedback && feedback.length > 0) {
             for (const [cat, minutes] of timeSpentByCategory) {
-                const entry = categoriesMap.get(cat) ?? { name: cat, total: 0, done: 0, timeSpent: 0 };
-                entry.timeSpent = minutes;
-                categoriesMap.set(cat, entry);
+                const entry = categoriesMap.get(cat);
+                if (entry) {
+                    entry.timeSpent = minutes;
+                } else {
+                    // Find a path for this category to get pathId
+                    const pathForCategory = paths.find(p => p.category?.name === cat);
+                    categoriesMap.set(cat, {
+                        name: cat,
+                        total: 0,
+                        done: 0,
+                        timeSpent: minutes,
+                        pathId: pathForCategory?.path_id || 0
+                    });
+                }
             }
         }
 
@@ -148,6 +160,7 @@ export class ProgressService {
             lessonsDone: c.done,
             totalLessons: c.total,
             timeSpent: c.timeSpent,
+            pathId: c.pathId,
         }));
 
         // 5) Upcoming tasks (not completed), sorted by path/task_order

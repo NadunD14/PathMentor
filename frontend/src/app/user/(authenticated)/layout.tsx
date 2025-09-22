@@ -40,7 +40,7 @@ export default function AuthenticatedLayout({
         <div className="min-h-screen bg-gray-50">
             <Navigation />
             <main className="py-10">
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div className="container-custom">
                     <Suspense fallback={<div>Loading...</div>}>
                         {children}
                     </Suspense>

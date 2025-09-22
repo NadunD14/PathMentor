@@ -83,9 +83,9 @@ export default function CompleteQuestionnairePage() {
     };
 
     const handleStartLearning = () => {
-        // Reset questionnaire and navigate to dashboard
+        // Reset questionnaire and navigate to the path page
         resetQuestionnaire();
-        router.push('/user/dashboard');
+        router.push(`/user/progress/path`);
     };
 
     const handleRetakeQuestionnaire = () => {
@@ -94,7 +94,7 @@ export default function CompleteQuestionnairePage() {
     };
 
     return (
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
+        <div className="container-custom py-6 sm:py-8">
             <PageHeader
                 title="Questionnaire Complete!"
                 subtitle="Thank you for completing your learning preferences"

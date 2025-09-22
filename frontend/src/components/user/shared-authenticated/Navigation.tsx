@@ -19,16 +19,16 @@ export default function Navigation() {
     const [mobileOpen, setMobileOpen] = useState(false);
 
     return (
-        <nav className="sticky top-0 z-50 backdrop-blur supports-[backdrop-filter]:bg-white/70 bg-white/90 border-b border-gray-200">
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                <div className="flex justify-between h-14">
+        <nav className="sticky top-0 z-50 backdrop-blur-md bg-white/80 border-b border-white/20 shadow-lg">
+            <div className="container-custom">
+                <div className="flex justify-between h-16">
                     <div className="flex">
                         <div className="flex-shrink-0 flex items-center">
-                            <Link href="/user" className="text-lg font-bold text-blue-600 hover:text-blue-700 transition-colors">
+                            <Link href="/user" className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-blue-700 bg-clip-text text-transparent hover:from-blue-700 hover:to-blue-800 transition-all duration-200">
                                 PathMentor
                             </Link>
                         </div>
-                        <div className="hidden sm:ml-6 sm:flex sm:space-x-6">
+                        <div className="hidden sm:ml-8 sm:flex sm:space-x-8">
                             {navigation.map((item) => {
                                 const isActive = pathname === item.href || pathname?.startsWith(item.href + '/');
                                 return (
@@ -38,7 +38,7 @@ export default function Navigation() {
                                         className={`${isActive
                                             ? 'text-gray-900 border-b-2 border-blue-600'
                                             : 'text-gray-600 hover:text-gray-900 hover:border-b-2 hover:border-gray-300'
-                                            } inline-flex items-center px-1 pt-1 text-sm font-medium transition-colors`}
+                                            } inline-flex items-center px-1 pt-1 text-base font-medium transition-colors`}
                                     >
                                         {item.name}
                                     </Link>
@@ -58,7 +58,7 @@ export default function Navigation() {
                                     onClick={() => setIsProfileMenuOpen(!isProfileMenuOpen)}
                                 >
                                     <span className="sr-only">Open user menu</span>
-                                    <div className="h-8 w-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-600">
+                                    <div className="h-9 w-9 rounded-full backdrop-blur-sm bg-gradient-to-br from-blue-50/80 to-blue-100/60 border border-blue-200/50 flex items-center justify-center text-blue-700 hover:from-blue-100/80 hover:to-blue-200/60 transition-all duration-200">
                                         {user?.name ? user.name.charAt(0).toUpperCase() : user?.email.charAt(0).toUpperCase()}
                                     </div>
                                 </button>
@@ -66,21 +66,21 @@ export default function Navigation() {
 
                             {isProfileMenuOpen && (
                                 <div
-                                    className="origin-top-right absolute right-0 mt-2 w-48 rounded-md shadow-lg py-1 bg-white/95 backdrop-blur ring-1 ring-black ring-opacity-5 focus:outline-none"
+                                    className="origin-top-right absolute right-0 mt-2 w-48 rounded-xl shadow-xl py-1 backdrop-blur-md bg-white/90 border border-white/20 focus:outline-none"
                                     role="menu"
                                     aria-orientation="vertical"
                                     aria-labelledby="user-menu"
                                 >
                                     <Link
                                         href="/user/profile"
-                                        className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                                        className="block px-4 py-2 text-sm text-gray-700 hover:bg-blue-50/50 rounded-lg mx-1 transition-colors"
                                         role="menuitem"
                                         onClick={() => setIsProfileMenuOpen(false)}
                                     >
                                         Your Profile
                                     </Link>
                                     <button
-                                        className="w-full text-left block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                                        className="w-full text-left block px-4 py-2 text-sm text-gray-700 hover:bg-blue-50/50 rounded-lg mx-1 transition-colors"
                                         role="menuitem"
                                         onClick={async () => {
                                             await logout();

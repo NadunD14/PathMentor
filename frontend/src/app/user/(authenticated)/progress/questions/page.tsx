@@ -140,32 +140,80 @@ export default function QuestionsPage() {
                 <div className="mt-8 text-red-500">{error}</div>
             )}
             {!loading && !error && (
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-8">
-                    {categories.map((category) => (
-                        <div
-                            key={category.category_id}
-                            className={`cursor-pointer border rounded-xl p-6 hover:shadow-lg transition-all ${selectedCategoryId === category.category_id
-                                ? 'border-blue-500 bg-blue-50'
-                                : 'border-gray-200'
-                                }`}
-                            onClick={() => handleCategorySelect(category.category_id)}
-                        >
-                            {/* Render image if available, otherwise use emoji icon */}
-                            {category.image_url ? (
-                                <div className="w-16 h-16 mb-4 flex items-center justify-center">
-                                    <img
-                                        src={category.image_url}
-                                        alt={category.name}
-                                        className="max-w-full max-h-full object-contain"
-                                    />
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mt-8">
+                    {categories.map((category) => {
+                        const selected = selectedCategoryId === category.category_id;
+                        return (
+                            <div
+                                key={category.category_id}
+                                className={`group relative cursor-pointer overflow-hidden rounded-2xl border transition-all duration-300 ${selected
+                                    ? 'border-blue-600 ring-2 ring-blue-500/60 shadow-lg'
+                                    : 'border-gray-200 hover:border-gray-300 hover:shadow-md'
+                                    }`}
+                                onClick={() => handleCategorySelect(category.category_id)}
+                                role="button"
+                                aria-pressed={selected}
+                                tabIndex={0}
+                                onKeyDown={(e) => {
+                                    if (e.key === 'Enter' || e.key === ' ') {
+                                        e.preventDefault();
+                                        handleCategorySelect(category.category_id);
+                                    }
+                                }}
+                            >
+                                <div className="relative h-40 sm:h-48 w-full overflow-hidden">
+                                    {category.image_url ? (
+                                        <img
+                                            src={category.image_url}
+                                            alt={category.name}
+                                            className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                                        />
+                                    ) : (
+                                        <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-blue-600 to-purple-600 text-5xl sm:text-6xl text-white/90">
+                                            <span className="drop-shadow-md">{category.icon}</span>
+                                        </div>
+                                    )}
+                                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
+                                    <div className="absolute bottom-3 left-3 right-3">
+                                        <h3 className="text-white drop-shadow-lg text-lg sm:text-xl font-semibold">
+                                            {category.name}
+                                        </h3>
+                                    </div>
+                                    {selected && (
+                                        <div className="absolute top-3 right-3 inline-flex items-center gap-1 rounded-full bg-blue-600/90 px-2.5 py-1 text-xs font-medium text-white shadow-sm">
+                                            Selected
+                                        </div>
+                                    )}
                                 </div>
-                            ) : (
-                                <div className="text-4xl mb-4">{category.icon}</div>
-                            )}
-                            <h3 className="text-xl font-semibold mb-2">{category.name}</h3>
-                            <p className="text-gray-600">{category.description}</p>
-                        </div>
-                    ))}
+
+                                <div className="p-4 sm:p-5 bg-white">
+                                    <p className="text-sm text-gray-600">
+                                        {category.description}
+                                    </p>
+                                    <div className="mt-4 flex items-center justify-between">
+                                        <span className={`inline-flex items-center gap-2 text-sm font-medium ${selected ? 'text-blue-700' : 'text-gray-700 group-hover:text-gray-900'
+                                            }`}>
+                                            Explore
+                                            <svg
+                                                xmlns="http://www.w3.org/2000/svg"
+                                                viewBox="0 0 20 20"
+                                                fill="currentColor"
+                                                className="h-4 w-4"
+                                                aria-hidden="true"
+                                            >
+                                                <path fillRule="evenodd" d="M10.293 3.293a1 1 0 011.414 0l5 5a1 1 0 010 1.414l-5 5a1 1 0 11-1.414-1.414L13.586 11H4a1 1 0 110-2h9.586l-3.293-3.293a1 1 0 010-1.414z" clipRule="evenodd" />
+                                            </svg>
+                                        </span>
+                                        <span className={`h-3 w-3 rounded-full border ${selected
+                                            ? 'bg-blue-600 border-blue-600'
+                                            : 'bg-gray-100 border-gray-300 group-hover:border-gray-400'
+                                            }`} />
+                                    </div>
+                                </div>
+                            </div>
+                        );
+                    })}
+
                     {categories.length === 0 && (
                         <div className="col-span-full text-gray-500">No categories available.</div>
                     )}

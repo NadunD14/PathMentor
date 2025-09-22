@@ -24,7 +24,7 @@ const fetchPosts = async (): Promise<Post[]> => {
     const { data, error } = await supabase
         .from('community_post')
         .select(`
-            id, 
+            user_id, 
             title, 
             content, 
             category,
@@ -39,7 +39,7 @@ const fetchPosts = async (): Promise<Post[]> => {
 
     // Transform database data to match our Post interface
     return (data || []).map(post => ({
-        id: post.id,
+        id: post.user_id,
         author: {
             name: 'Anon',  // Placeholder name
             avatar: undefined, // Default no avatar
