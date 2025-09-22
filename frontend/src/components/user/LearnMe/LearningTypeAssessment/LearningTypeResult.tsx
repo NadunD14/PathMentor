@@ -30,7 +30,7 @@ export default function LearningTypeResult({ userProfile, onRetakeAssessment }: 
     };
 
     return (
-        <div className="max-w-4xl mx-auto space-y-8">
+        <div className="max-w-6xl mx-auto space-y-8">
             {/* Main Result Card */}
             <div className="bg-gradient-to-r from-blue-500 to-purple-600 rounded-xl p-8 text-white">
                 <div className="text-center">

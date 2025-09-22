@@ -96,6 +96,7 @@ export interface Database {
                     status: string | null;
                     task_order: number;
                     created_at: string | null;
+                    task_link: string | null;
                 };
                 Insert: {
                     task_id?: number;
@@ -109,6 +110,7 @@ export interface Database {
                     status?: string | null;
                     task_order: number;
                     created_at?: string | null;
+                    task_link?: string | null;
                 };
                 Update: {
                     task_id?: number;
@@ -122,6 +124,7 @@ export interface Database {
                     status?: string | null;
                     task_order?: number;
                     created_at?: string | null;
+                    task_link?: string | null;
                 };
             };
             general_questions: {
@@ -254,27 +257,122 @@ export interface Database {
             category_questions: {
                 Row: {
                     category_question_id: number;
-                    category_id: number | null;
+                    category_id: number;
                     question_id: number | null;
-                    question_type: string | null;
+                    question_type: string;
                     context_for_ai: string | null;
                     created_at: string | null;
                 };
                 Insert: {
                     category_question_id?: number;
-                    category_id?: number | null;
+                    category_id: number;
                     question_id?: number | null;
-                    question_type?: string | null;
+                    question_type: string;
                     context_for_ai?: string | null;
                     created_at?: string | null;
                 };
                 Update: {
                     category_question_id?: number;
-                    category_id?: number | null;
+                    category_id?: number;
                     question_id?: number | null;
-                    question_type?: string | null;
+                    question_type?: string;
                     context_for_ai?: string | null;
                     created_at?: string | null;
+                };
+            };
+            category_options: {
+                Row: {
+                    option_id: number;
+                    category_question_id: number;
+                    option_text: string;
+                    created_at: string | null;
+                };
+                Insert: {
+                    option_id?: number;
+                    category_question_id: number;
+                    option_text: string;
+                    created_at?: string | null;
+                };
+                Update: {
+                    option_id?: number;
+                    category_question_id?: number;
+                    option_text?: string;
+                    created_at?: string | null;
+                };
+            };
+            user_category_answers: {
+                Row: {
+                    answer_id: number;
+                    user_id: string;
+                    category_question_id: number;
+                    answer_text: string | null;
+                    option_id: number | null;
+                    created_at: string | null;
+                };
+                Insert: {
+                    answer_id?: number;
+                    user_id: string;
+                    category_question_id: number;
+                    answer_text?: string | null;
+                    option_id?: number | null;
+                    created_at?: string | null;
+                };
+                Update: {
+                    answer_id?: number;
+                    user_id?: string;
+                    category_question_id?: number;
+                    answer_text?: string | null;
+                    option_id?: number | null;
+                    created_at?: string | null;
+                };
+            };
+            user_category_selections: {
+                Row: {
+                    selection_id: number;
+                    user_id: string;
+                    category_id: number;
+                    created_at: string | null;
+                };
+                Insert: {
+                    selection_id?: number;
+                    user_id: string;
+                    category_id: number;
+                    created_at?: string | null;
+                };
+                Update: {
+                    selection_id?: number;
+                    user_id?: string;
+                    category_id?: number;
+                    created_at?: string | null;
+                };
+            };
+            community_post: {
+                Row: {
+                    post_id: number;
+                    user_id: string;
+                    title: string;
+                    content: string;
+                    category: string;
+                    created_at: string | null;
+                    updated_at: string | null;
+                };
+                Insert: {
+                    post_id?: number;
+                    user_id: string;
+                    title: string;
+                    content: string;
+                    category: string;
+                    created_at?: string | null;
+                    updated_at?: string | null;
+                };
+                Update: {
+                    post_id?: number;
+                    user_id?: string;
+                    title?: string;
+                    content?: string;
+                    category?: string;
+                    created_at?: string | null;
+                    updated_at?: string | null;
                 };
             };
             ai_model_logs: {

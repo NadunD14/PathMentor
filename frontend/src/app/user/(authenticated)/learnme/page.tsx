@@ -175,7 +175,7 @@ export default function LearnMePage() {
     };
 
     return (
-        <div className="container-custom py-6 sm:py-8">
+        <div className="py-6 sm:py-8">
             {/* <PageHeader
                 title="Learn Me"
                 subtitle={

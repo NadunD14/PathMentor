@@ -20,41 +20,20 @@ export async function GET(request: NextRequest) {
         }
 
         if (questionType === 'general') {
-            // First, get all question IDs that are linked to categories
-            const { data: categoryQuestionIds, error: categoryError } = await supabase
-                .from('category_questions')
-                .select('question_id');
-
-            if (categoryError) {
-                console.error('Error fetching category question IDs:', categoryError);
-                return NextResponse.json(
-                    { error: 'Failed to fetch category question IDs' },
-                    { status: 500 }
-                );
-            }
-
-            const excludeIds = (categoryQuestionIds || []).map(item => item.question_id);
-
-            // Then, fetch general questions that are NOT in the category questions
-            let query = supabase
+            // Fetch all general questions with their options (no category linkage filtering)
+            const { data, error } = await supabase
                 .from('general_questions')
                 .select(`
-            question_id,
-            question,
-            question_type,
-            question_options (
-              option_id,
-              option_text
-            )
-          `)
+                    question_id,
+                    question,
+                    question_type,
+                    context_for_ai,
+                    question_options (
+                        option_id,
+                        option_text
+                    )
+                `)
                 .order('question_id', { ascending: true });
-
-            // Only apply the filter if there are category questions to exclude
-            if (excludeIds.length > 0) {
-                query = query.not('question_id', 'in', `(${excludeIds.join(',')})`);
-            }
-
-            const { data, error } = await query;
 
             if (error) {
                 console.error('Error fetching general questions:', error);
@@ -158,15 +137,12 @@ async function getUserComprehensiveData(userId: string) {
                 *,
                 category_questions (
                     category_question_id,
-                    question_id,
                     category_id,
-                    general_questions (
-                        question_id,
-                        question,
-                        question_type
-                    )
+                    question_id,
+                    question_type,
+                    context_for_ai
                 ),
-                question_options (
+                category_options (
                     option_id,
                     option_text
                 )
@@ -206,14 +182,9 @@ async function getCategoryQuestions(categoryId: number) {
                 question_id,
                 question_type,
                 context_for_ai,
-                general_questions (
-                    question_id,
-                    question,
-                    question_type,
-                    question_options (
-                        option_id,
-                        option_text
-                    )
+                category_options (
+                    option_id,
+                    option_text
                 )
             `)
             .eq('category_id', categoryId)

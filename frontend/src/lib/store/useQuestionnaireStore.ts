@@ -19,15 +19,38 @@ export interface Question {
     question_options?: QuestionOption[];
 }
 
+export interface CategoryQuestion {
+    category_question_id: number;
+    category_id: number;
+    question_id?: number;
+    question_type: string;
+    context_for_ai?: string;
+    category_options?: CategoryOption[];
+}
+
 export interface QuestionOption {
+    option_id: number;
+    option_text: string;
+}
+
+export interface CategoryOption {
     option_id: number;
     option_text: string;
 }
 
 export interface UserAnswer {
     answer_id?: number;
-    user_id: string; // Changed to string to match Supabase auth user IDs
+    user_id: string;
     question_id: number;
+    category_id?: number;
+    answer_text?: string;
+    option_id?: number;
+}
+
+export interface UserCategoryAnswer {
+    answer_id?: number;
+    user_id: string;
+    category_question_id: number;
     answer_text?: string;
     option_id?: number;
 }
@@ -40,15 +63,17 @@ export interface QuestionnaireState {
 
     // Questions and answers
     generalQuestions: Question[];
-    categoryQuestions: Question[];
+    categoryQuestions: CategoryQuestion[];
     userAnswers: Record<number, UserAnswer>;
+    userCategoryAnswers: Record<number, UserCategoryAnswer>;
 
     // Actions
     selectCategory: (category: LearningCategory, categoryId: number) => void;
     setCurrentStep: (step: 'category' | 'general' | 'specific' | 'complete') => void;
     setGeneralQuestions: (questions: Question[]) => void;
-    setCategoryQuestions: (questions: Question[]) => void;
+    setCategoryQuestions: (questions: CategoryQuestion[]) => void;
     saveAnswer: (questionId: number, answer: Omit<UserAnswer, 'question_id'>) => void;
+    saveCategoryAnswer: (categoryQuestionId: number, answer: Omit<UserCategoryAnswer, 'category_question_id'>) => void;
     resetQuestionnaire: () => void;
 }
 
@@ -59,6 +84,7 @@ const initialState = {
     generalQuestions: [],
     categoryQuestions: [],
     userAnswers: {},
+    userCategoryAnswers: {},
 };
 
 export const useQuestionnaireStore = create<QuestionnaireState>()(
@@ -91,6 +117,15 @@ export const useQuestionnaireStore = create<QuestionnaireState>()(
                     userAnswers: {
                         ...state.userAnswers,
                         [questionId]: { ...answer, question_id: questionId }
+                    }
+                }));
+            },
+
+            saveCategoryAnswer: (categoryQuestionId, answer) => {
+                set((state) => ({
+                    userCategoryAnswers: {
+                        ...state.userCategoryAnswers,
+                        [categoryQuestionId]: { ...answer, category_question_id: categoryQuestionId }
                     }
                 }));
             },

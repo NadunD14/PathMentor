@@ -1,35 +1,67 @@
 import { supabase } from '../../supabase-client';
-import { Database } from '../types/database';
 
-type Question = Database['public']['Tables']['general_questions']['Row'];
-type QuestionOption = Database['public']['Tables']['question_options']['Row'];
-type UserAnswer = Database['public']['Tables']['user_answers']['Row'];
-type UserAnswerInsert = Database['public']['Tables']['user_answers']['Insert'];
+// Updated interfaces to match the new backend structure
+export interface Question {
+    question_id: number;
+    question: string;
+    question_type: string;
+    context_for_ai?: string;
+    question_options?: QuestionOption[];
+}
 
-export interface QuestionWithOptions extends Question {
-    question_options: QuestionOption[];
+export interface CategoryQuestion {
+    category_question_id: number;
+    category_id: number;
+    question_id?: number;
+    question_type: string;
+    context_for_ai?: string;
+    category_options?: CategoryOption[];
+}
+
+export interface QuestionOption {
+    option_id: number;
+    option_text: string;
+}
+
+export interface CategoryOption {
+    option_id: number;
+    option_text: string;
+}
+
+export interface UserAnswer {
+    answer_id?: number;
+    user_id: string;
+    question_id: number;
+    category_id?: number;
+    answer_text?: string;
+    option_id?: number;
+}
+
+export interface UserCategoryAnswer {
+    answer_id?: number;
+    user_id: string;
+    category_question_id: number;
+    answer_text?: string;
+    option_id?: number;
 }
 
 export class QuestionService {
-    /**
-     * Get all questions with their options
-     */
-    static async getAllQuestions(): Promise<QuestionWithOptions[]> {
-        try {
-            const { data, error } = await supabase
-                .from('general_questions')
-                .select(`
-          *,
-          question_options (*)
-        `)
-                .order('question_id');
+    private static readonly API_BASE_URL = '/api/v1';
 
-            if (error) {
-                console.error('Error fetching questions:', error);
+    /**
+     * Get all general questions with their options
+     */
+    static async getAllQuestions(): Promise<Question[]> {
+        try {
+            const response = await fetch(`${this.API_BASE_URL}/users/questions/general`);
+            const result = await response.json();
+
+            if (!response.ok || !result.success) {
+                console.error('Error fetching general questions:', result);
                 return [];
             }
 
-            return data || [];
+            return result.questions || [];
         } catch (error) {
             console.error('Error in getAllQuestions:', error);
             return [];
@@ -39,24 +71,17 @@ export class QuestionService {
     /**
      * Get questions for a specific category
      */
-    static async getQuestionsByCategory(categoryId: number): Promise<QuestionWithOptions[]> {
+    static async getQuestionsByCategory(categoryId: number): Promise<CategoryQuestion[]> {
         try {
-            const { data, error } = await supabase
-                .from('category_questions')
-                .select(`
-          general_questions (
-            *,
-            question_options (*)
-          )
-        `)
-                .eq('category_id', categoryId);
+            const response = await fetch(`${this.API_BASE_URL}/users/questions/category/${categoryId}`);
+            const result = await response.json();
 
-            if (error) {
-                console.error('Error fetching category questions:', error);
+            if (!response.ok || !result.success) {
+                console.error('Error fetching category questions:', result);
                 return [];
             }
 
-            return (data?.map(item => item.general_questions).filter(Boolean) as unknown as QuestionWithOptions[]) || [];
+            return result.questions || [];
         } catch (error) {
             console.error('Error in getQuestionsByCategory:', error);
             return [];
@@ -64,22 +89,26 @@ export class QuestionService {
     }
 
     /**
-     * Submit user answer
+     * Submit user answer to general question
      */
-    static async submitAnswer(answerData: UserAnswerInsert): Promise<UserAnswer | null> {
+    static async submitAnswer(answerData: Omit<UserAnswer, 'answer_id'>): Promise<UserAnswer | null> {
         try {
-            const { data, error } = await supabase
-                .from('user_answers')
-                .insert(answerData)
-                .select()
-                .single();
+            const response = await fetch(`${this.API_BASE_URL}/users/answers/general`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(answerData),
+            });
 
-            if (error) {
-                console.error('Error submitting answer:', error);
+            const result = await response.json();
+
+            if (!response.ok || !result.success) {
+                console.error('Error submitting answer:', result);
                 return null;
             }
 
-            return data;
+            return result.answer;
         } catch (error) {
             console.error('Error in submitAnswer:', error);
             return null;
@@ -87,21 +116,42 @@ export class QuestionService {
     }
 
     /**
-     * Submit multiple answers
+     * Submit user answer to category question
      */
-    static async submitAnswers(answersData: UserAnswerInsert[]): Promise<UserAnswer[]> {
+    static async submitCategoryAnswer(answerData: Omit<UserCategoryAnswer, 'answer_id'>): Promise<UserCategoryAnswer | null> {
         try {
-            const { data, error } = await supabase
-                .from('user_answers')
-                .insert(answersData)
-                .select();
+            const response = await fetch(`${this.API_BASE_URL}/users/answers/category`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(answerData),
+            });
 
-            if (error) {
-                console.error('Error submitting answers:', error);
-                return [];
+            const result = await response.json();
+
+            if (!response.ok || !result.success) {
+                console.error('Error submitting category answer:', result);
+                return null;
             }
 
-            return data || [];
+            return result.answer;
+        } catch (error) {
+            console.error('Error in submitCategoryAnswer:', error);
+            return null;
+        }
+    }
+
+    /**
+     * Submit multiple general answers
+     */
+    static async submitAnswers(answersData: Omit<UserAnswer, 'answer_id'>[]): Promise<UserAnswer[]> {
+        try {
+            const results = await Promise.all(
+                answersData.map(answer => this.submitAnswer(answer))
+            );
+
+            return results.filter(Boolean) as UserAnswer[];
         } catch (error) {
             console.error('Error in submitAnswers:', error);
             return [];
@@ -109,48 +159,109 @@ export class QuestionService {
     }
 
     /**
-     * Get user answers for a category
+     * Submit multiple category answers
      */
-    static async getUserAnswersByCategory(userId: string, categoryId: number): Promise<UserAnswer[]> {
+    static async submitCategoryAnswers(answersData: Omit<UserCategoryAnswer, 'answer_id'>[]): Promise<UserCategoryAnswer[]> {
         try {
-            const { data, error } = await supabase
-                .from('user_answers')
-                .select('*')
-                .eq('user_id', userId)
-                .eq('category_id', categoryId);
+            const results = await Promise.all(
+                answersData.map(answer => this.submitCategoryAnswer(answer))
+            );
 
-            if (error) {
-                console.error('Error fetching user answers:', error);
-                return [];
-            }
-
-            return data || [];
+            return results.filter(Boolean) as UserCategoryAnswer[];
         } catch (error) {
-            console.error('Error in getUserAnswersByCategory:', error);
+            console.error('Error in submitCategoryAnswers:', error);
             return [];
         }
     }
 
     /**
-     * Get all user answers
+     * Get user general answers
      */
     static async getUserAnswers(userId: string): Promise<UserAnswer[]> {
         try {
-            const { data, error } = await supabase
-                .from('user_answers')
-                .select('*')
-                .eq('user_id', userId)
-                .order('created_at', { ascending: false });
+            const response = await fetch(`${this.API_BASE_URL}/users/${userId}/answers/general`);
+            const result = await response.json();
 
-            if (error) {
-                console.error('Error fetching user answers:', error);
+            if (!response.ok || !result.success) {
+                console.error('Error fetching user answers:', result);
                 return [];
             }
 
-            return data || [];
+            return result.answers || [];
         } catch (error) {
             console.error('Error in getUserAnswers:', error);
             return [];
+        }
+    }
+
+    /**
+     * Get user category answers
+     */
+    static async getUserCategoryAnswers(userId: string, categoryId?: number): Promise<UserCategoryAnswer[]> {
+        try {
+            const url = categoryId
+                ? `${this.API_BASE_URL}/users/${userId}/answers/category?category_id=${categoryId}`
+                : `${this.API_BASE_URL}/users/${userId}/answers/category`;
+
+            const response = await fetch(url);
+            const result = await response.json();
+
+            if (!response.ok || !result.success) {
+                console.error('Error fetching user category answers:', result);
+                return [];
+            }
+
+            return result.answers || [];
+        } catch (error) {
+            console.error('Error in getUserCategoryAnswers:', error);
+            return [];
+        }
+    }
+
+    /**
+     * Save user category selection
+     */
+    static async saveCategorySelection(userId: string, categoryId: number): Promise<boolean> {
+        try {
+            const response = await fetch(`${this.API_BASE_URL}/users/category-selection`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ user_id: userId, category_id: categoryId }),
+            });
+
+            const result = await response.json();
+
+            if (!response.ok || !result.success) {
+                console.error('Error saving category selection:', result);
+                return false;
+            }
+
+            return true;
+        } catch (error) {
+            console.error('Error in saveCategorySelection:', error);
+            return false;
+        }
+    }
+
+    /**
+     * Get user complete profile
+     */
+    static async getUserCompleteProfile(userId: string, categoryId: number): Promise<any> {
+        try {
+            const response = await fetch(`${this.API_BASE_URL}/users/${userId}/profile/${categoryId}`);
+            const result = await response.json();
+
+            if (!response.ok || !result.success) {
+                console.error('Error fetching user profile:', result);
+                return null;
+            }
+
+            return result.profile;
+        } catch (error) {
+            console.error('Error in getUserCompleteProfile:', error);
+            return null;
         }
     }
 }

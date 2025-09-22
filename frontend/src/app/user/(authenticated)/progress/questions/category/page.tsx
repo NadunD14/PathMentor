@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import PageHeader from '@/components/user/shared/PageHeader';
-import { useQuestionnaireStore, Question } from '@/lib/store/useQuestionnaireStore';
+import { useQuestionnaireStore, CategoryQuestion } from '@/lib/store/useQuestionnaireStore';
 import { getSession } from '@/lib/auth';
 import { Session } from '@supabase/supabase-js';
 
@@ -52,27 +52,19 @@ export default function CategoryQuestionsPage() {
         // Fetch category-specific questions from API
         const fetchCategoryQuestions = async () => {
             try {
-                const response = await fetch(`/api/questions/category?categoryId=${selectedCategoryId}`);
+                // Ensure we have a session for userId param
+                const sess = await getSession();
+                if (!sess?.user?.id) {
+                    throw new Error('Missing user session');
+                }
+
+                const response = await fetch(`/api/questions?type=category&userId=${sess.user.id}&categoryId=${selectedCategoryId}`);
                 if (!response.ok) {
                     throw new Error('Failed to fetch category questions');
                 }
 
                 const { questions } = await response.json();
-
-                // Extract the general_questions from the nested structure
-                const formattedQuestions = questions.map((item: any) => item.general_questions).filter(Boolean);
-                setCategoryQuestions(formattedQuestions);
-
-                // Build a map from general question_id -> category_question_id for saving answers
-                const map: Record<number, number> = {};
-                questions.forEach((item: any) => {
-                    const qid = item?.general_questions?.question_id;
-                    const cqid = item?.category_question_id;
-                    if (qid && cqid) {
-                        map[qid] = cqid;
-                    }
-                });
-                setQuestionToCategoryMap(map);
+                setCategoryQuestions(questions as CategoryQuestion[]);
             } catch (error) {
                 console.error('Error fetching category questions:', error);
                 setError('Failed to load questions');
@@ -84,8 +76,8 @@ export default function CategoryQuestionsPage() {
         fetchCategoryQuestions();
     }, [selectedCategory, selectedCategoryId, router, setCategoryQuestions]);
 
-    const handleInputChange = (questionId: number, value: any) => {
-        setAnswers(prev => ({ ...prev, [questionId]: value }));
+    const handleInputChange = (categoryQuestionId: number, value: any) => {
+        setAnswers(prev => ({ ...prev, [categoryQuestionId]: value }));
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -98,32 +90,29 @@ export default function CategoryQuestionsPage() {
 
         try {
             // Save all answers to the backend
-            for (const [questionId, value] of Object.entries(answers)) {
-                const numericQuestionId = parseInt(questionId);
-                const categoryQuestionId = questionToCategoryMap[numericQuestionId];
-                if (!categoryQuestionId) {
-                    console.warn('Missing category_question_id mapping for general question id:', numericQuestionId);
-                    continue; // Skip if mapping isn't available
-                }
+            for (const [categoryQuestionIdStr, value] of Object.entries(answers)) {
+                const categoryQuestionId = parseInt(categoryQuestionIdStr);
                 const answer = {
-                    user_id: session.user.id, // Use actual user ID from session
+                    user_id: session.user.id,
                     answer_text: typeof value === 'string' ? value : undefined,
                     option_id: typeof value === 'number' ? value : undefined,
                 };
 
-                saveAnswer(numericQuestionId, answer);
+                // Save in client store
+                useQuestionnaireStore.getState().saveCategoryAnswer(categoryQuestionId, answer);
 
-                // Save to backend
+                // Save via Next.js API route
                 await fetch('/api/category-answers', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
+                        ...(session?.access_token ? { 'Authorization': `Bearer ${session.access_token}` } : {}),
                     },
                     body: JSON.stringify({
-                        userId: session.user.id, // Use actual user ID from session
-                        categoryQuestionId,
-                        answerText: answer.answer_text,
-                        optionId: answer.option_id,
+                        user_id: session.user.id,
+                        category_question_id: categoryQuestionId,
+                        answer_text: answer.answer_text,
+                        option_id: answer.option_id,
                     }),
                 });
             }
@@ -175,22 +164,22 @@ export default function CategoryQuestionsPage() {
             />
 
             <form onSubmit={handleSubmit} className="mt-8 space-y-6 max-w-3xl mx-auto">
-                {categoryQuestions.map((question: Question, idx: number) => (
-                    <div key={question.question_id} className="rounded-2xl border border-gray-200 bg-white p-5 sm:p-6 shadow-sm">
+                {categoryQuestions.map((question: CategoryQuestion, idx: number) => (
+                    <div key={question.category_question_id} className="rounded-2xl border border-gray-200 bg-white p-5 sm:p-6 shadow-sm">
                         <div className="flex items-start justify-between gap-4">
                             <label className="block text-base sm:text-lg font-semibold text-gray-900">
-                                {idx + 1}. {question.question}
+                                {idx + 1}. {question.context_for_ai}
                             </label>
                         </div>
 
-                        {question.question_options && question.question_options.length > 0 ? (
+                        {question.category_options && question.category_options.length > 0 ? (
                             <div className="mt-4 grid grid-cols-1 gap-3">
-                                {question.question_options.map((option) => {
-                                    const checked = answers[question.question_id] === option.option_id;
+                                {question.category_options.map((option) => {
+                                    const checked = answers[question.category_question_id] === option.option_id;
                                     return (
                                         <label
                                             key={option.option_id}
-                                            htmlFor={`q${question.question_id}_o${option.option_id}`}
+                                            htmlFor={`cq${question.category_question_id}_o${option.option_id}`}
                                             className={`flex cursor-pointer items-center justify-between rounded-xl border p-3.5 transition ${checked
                                                 ? 'border-blue-600 bg-blue-50'
                                                 : 'border-gray-200 hover:border-gray-300'
@@ -205,12 +194,12 @@ export default function CategoryQuestionsPage() {
                                                 {option.option_text}
                                             </span>
                                             <input
-                                                id={`q${question.question_id}_o${option.option_id}`}
+                                                id={`cq${question.category_question_id}_o${option.option_id}`}
                                                 type="radio"
-                                                name={`question_${question.question_id}`}
+                                                name={`category_question_${question.category_question_id}`}
                                                 value={option.option_id}
                                                 className="sr-only"
-                                                onChange={(e) => handleInputChange(question.question_id, parseInt(e.target.value))}
+                                                onChange={(e) => handleInputChange(question.category_question_id, parseInt(e.target.value))}
                                                 checked={checked}
                                             />
                                         </label>
@@ -224,8 +213,8 @@ export default function CategoryQuestionsPage() {
                                         rows={4}
                                         className="block w-full rounded-xl border border-gray-200 bg-white p-4 text-sm text-gray-900 shadow-sm placeholder:text-gray-400 focus:border-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-100"
                                         placeholder="Type your answer here..."
-                                        value={answers[question.question_id] || ''}
-                                        onChange={(e) => handleInputChange(question.question_id, e.target.value)}
+                                        value={answers[question.category_question_id] || ''}
+                                        onChange={(e) => handleInputChange(question.category_question_id, e.target.value)}
                                         required
                                     />
                                 </div>

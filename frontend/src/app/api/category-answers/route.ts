@@ -1,9 +1,25 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabase } from '@/supabase-client';
+import { createClient } from '@supabase/supabase-js';
+import type { Database } from '@/lib/types/database';
+
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL as string;
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY as string;
 
 export async function POST(request: NextRequest) {
     try {
-        const { userId, categoryQuestionId, answerText, optionId } = await request.json();
+        const body = await request.json();
+        const authHeader = request.headers.get('authorization') || request.headers.get('Authorization') || '';
+        const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : undefined;
+
+        // Create a per-request Supabase client with the caller's session to satisfy RLS
+        const sb = createClient<Database>(supabaseUrl, supabaseAnonKey, {
+            global: token ? { headers: { Authorization: `Bearer ${token}` } } : undefined,
+        });
+        // Accept both camelCase and snake_case keys for flexibility
+        const userId: string | undefined = body.userId ?? body.user_id;
+        const categoryQuestionId: number | undefined = body.categoryQuestionId ?? body.category_question_id;
+        const answerText: string | undefined = body.answerText ?? body.answer_text;
+        const optionId: number | undefined = body.optionId ?? body.option_id;
 
         if (!userId || !categoryQuestionId) {
             return NextResponse.json(
@@ -13,7 +29,7 @@ export async function POST(request: NextRequest) {
         }
 
         // Check if answer already exists for this user and category question
-        const { data: existingAnswer, error: checkError } = await supabase
+        const { data: existingAnswer, error: checkError } = await sb
             .from('user_category_answers')
             .select('answer_id')
             .eq('user_id', userId)
@@ -28,14 +44,33 @@ export async function POST(request: NextRequest) {
             );
         }
 
+        // Determine safe payload considering potential FK constraints
+        let finalAnswerText = answerText;
+        let finalOptionId = optionId as number | null | undefined;
+
+        // If an optionId was provided, check if it's a category option. If so, store as text to avoid FK mismatch.
+        if (finalOptionId && !finalAnswerText) {
+            const { data: catOpt, error: catOptErr } = await sb
+                .from('category_options')
+                .select('option_text')
+                .eq('option_id', finalOptionId)
+                .single();
+
+            if (!catOptErr && catOpt) {
+                // Likely a category option; persist the text and clear option_id to satisfy older FKs
+                finalAnswerText = catOpt.option_text as string;
+                finalOptionId = null;
+            }
+        }
+
         let result;
         if (existingAnswer) {
             // Update existing answer
-            const { data, error } = await supabase
+            const { data, error } = await sb
                 .from('user_category_answers')
                 .update({
-                    answer_text: answerText,
-                    option_id: optionId,
+                    answer_text: finalAnswerText,
+                    option_id: finalOptionId ?? null,
                 })
                 .eq('answer_id', existingAnswer.answer_id)
                 .select()
@@ -51,13 +86,13 @@ export async function POST(request: NextRequest) {
             result = data;
         } else {
             // Create new answer
-            const { data, error } = await supabase
+            const { data, error } = await sb
                 .from('user_category_answers')
                 .insert({
                     user_id: userId,
                     category_question_id: categoryQuestionId,
-                    answer_text: answerText,
-                    option_id: optionId,
+                    answer_text: finalAnswerText,
+                    option_id: finalOptionId ?? null,
                 })
                 .select()
                 .single();
@@ -78,10 +113,10 @@ export async function POST(request: NextRequest) {
             message: existingAnswer ? 'Answer updated successfully' : 'Answer saved successfully'
         });
 
-    } catch (error) {
+    } catch (error: any) {
         console.error('Unexpected error in category answers:', error);
         return NextResponse.json(
-            { error: 'Internal server error' },
+            { error: 'Internal server error', details: error?.message || String(error) },
             { status: 500 }
         );
     }
@@ -100,7 +135,13 @@ export async function GET(request: NextRequest) {
             );
         }
 
-        let query = supabase
+        const authHeader = request.headers.get('authorization') || request.headers.get('Authorization') || '';
+        const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : undefined;
+        const sb = createClient<Database>(supabaseUrl, supabaseAnonKey, {
+            global: token ? { headers: { Authorization: `Bearer ${token}` } } : undefined,
+        });
+
+        let query = sb
             .from('user_category_answers')
             .select(`
                 *,
@@ -108,13 +149,10 @@ export async function GET(request: NextRequest) {
                     category_question_id,
                     category_id,
                     question_id,
-                    general_questions (
-                        question_id,
-                        question,
-                        question_type
-                    )
+                    question_type,
+                    context_for_ai
                 ),
-                question_options (
+                category_options (
                     option_id,
                     option_text
                 )

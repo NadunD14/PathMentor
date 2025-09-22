@@ -85,14 +85,9 @@ class UserRepository(BaseRepository):
                     category_question_id,
                     category_id,
                     question_type,
-                    context_for_ai,
-                    general_questions (
-                        question_id,
-                        question,
-                        question_type
-                    )
+                    context_for_ai
                 ),
-                question_options (
+                category_options (
                     option_id,
                     option_text
                 )
@@ -115,7 +110,7 @@ class UserRepository(BaseRepository):
             raise
     
     async def get_category_questions(self, category_id: int) -> List[Dict[str, Any]]:
-        """Get questions for a specific category."""
+        """Get questions for a specific category with their options."""
         try:
             result = self.db.client.table("category_questions").select("""
                 category_question_id,
@@ -123,19 +118,32 @@ class UserRepository(BaseRepository):
                 question_id,
                 question_type,
                 context_for_ai,
-                general_questions (
-                    question_id,
-                    question,
-                    question_type,
-                    question_options (
-                        option_id,
-                        option_text
-                    )
+                category_options (
+                    option_id,
+                    option_text
                 )
             """).eq("category_id", category_id).execute()
             return result.data or []
         except Exception as e:
             logger.error(f"Error getting category questions: {e}")
+            raise
+
+    async def get_general_questions(self) -> List[Dict[str, Any]]:
+        """Get all general questions with their options."""
+        try:
+            result = self.db.client.table("general_questions").select("""
+                question_id,
+                question,
+                question_type,
+                context_for_ai,
+                question_options (
+                    option_id,
+                    option_text
+                )
+            """).execute()
+            return result.data or []
+        except Exception as e:
+            logger.error(f"Error getting general questions: {e}")
             raise
 
     async def get_user_complete_profile(self, user_id: str, category_id: int) -> Optional[Dict[str, Any]]:
@@ -196,14 +204,11 @@ class UserRepository(BaseRepository):
             
             for answer in category_answers_raw:
                 category_question = answer.get("category_questions", {})
-                general_question = category_question.get("general_questions", {})
-                option_info = answer.get("question_options", {})
+                option_info = answer.get("category_options", {})
                 
                 formatted_answer = {
                     "category_question_id": category_question.get("category_question_id"),
-                    "question_id": general_question.get("question_id"),
-                    "question_text": general_question.get("question"),
-                    "question_type": general_question.get("question_type"),
+                    "question_type": category_question.get("question_type"),
                     "context_for_ai": category_question.get("context_for_ai"),
                     "answer_text": answer.get("answer_text"),
                     "selected_option": {
@@ -361,4 +366,56 @@ class UserRepository(BaseRepository):
             
         except Exception as e:
             logger.error(f"Error getting user complete data: {e}")
+            return None
+
+    async def save_user_answer(self, user_id: str, question_id: int, category_id: Optional[int] = None, 
+                              answer_text: Optional[str] = None, option_id: Optional[int] = None) -> Optional[Dict[str, Any]]:
+        """Save a user's answer to a general question."""
+        try:
+            answer_data = {
+                "user_id": user_id,
+                "question_id": question_id,
+                "category_id": category_id,
+                "answer_text": answer_text,
+                "option_id": option_id
+            }
+            
+            result = self.db.client.table("user_answers").insert(answer_data).execute()
+            return result.data[0] if result.data else None
+            
+        except Exception as e:
+            logger.error(f"Error saving user answer: {e}")
+            return None
+
+    async def save_user_category_answer(self, user_id: str, category_question_id: int, 
+                                       answer_text: Optional[str] = None, option_id: Optional[int] = None) -> Optional[Dict[str, Any]]:
+        """Save a user's answer to a category-specific question."""
+        try:
+            answer_data = {
+                "user_id": user_id,
+                "category_question_id": category_question_id,
+                "answer_text": answer_text,
+                "option_id": option_id
+            }
+            
+            result = self.db.client.table("user_category_answers").insert(answer_data).execute()
+            return result.data[0] if result.data else None
+            
+        except Exception as e:
+            logger.error(f"Error saving user category answer: {e}")
+            return None
+
+    async def save_user_category_selection(self, user_id: str, category_id: int) -> Optional[Dict[str, Any]]:
+        """Save a user's category selection."""
+        try:
+            selection_data = {
+                "user_id": user_id,
+                "category_id": category_id
+            }
+            
+            result = self.db.client.table("user_category_selections").insert(selection_data).execute()
+            return result.data[0] if result.data else None
+            
+        except Exception as e:
+            logger.error(f"Error saving user category selection: {e}")
             return None
