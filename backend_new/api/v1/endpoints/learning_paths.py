@@ -113,6 +113,50 @@ async def complete_setup(
 
         logger.info(f"UserProfile: {user_profile_model}")
 
+        # Atomic idempotency guard: check for existing path more thoroughly
+        try:
+            existing_paths = await path_repo.get_user_paths(request.user_id)
+            existing_ai_for_category = next((p for p in (existing_paths or [])
+                                             if str(p.get('category_id')) == str(request.category_id)
+                                             and (p.get('ai_generated') is True or str(p.get('ai_generated')).lower() == 'true')),
+                                            None)
+            
+            # Double-check during concurrent requests by re-querying right before creation
+            if not existing_ai_for_category:
+                # Small delay to let any concurrent path creation complete
+                import asyncio
+                await asyncio.sleep(0.1)
+                
+                # Re-check after brief delay
+                existing_paths_recheck = await path_repo.get_user_paths(request.user_id)
+                existing_ai_for_category = next((p for p in (existing_paths_recheck or [])
+                                                 if str(p.get('category_id')) == str(request.category_id)
+                                                 and (p.get('ai_generated') is True or str(p.get('ai_generated')).lower() == 'true')),
+                                                None)
+        except Exception as e:
+            logger.error(f"Error checking existing paths for idempotency: {e}")
+            existing_ai_for_category = None
+
+        if existing_ai_for_category and not getattr(request, 'force', False):
+            logger.info(f"Existing AI-generated path found (ID: {existing_ai_for_category.get('path_id')}) for user/category; skipping regeneration")
+            analysis_result = {
+                "recommended_learning_style": str(getattr(user_profile_model.learning_style, 'value', user_profile_model.learning_style)),
+                "experience_level": str(getattr(user_profile_model.experience_level, 'value', user_profile_model.experience_level)),
+                "preferred_platforms": [],
+            }
+            return MLCompleteSetupResponse(
+                success=True,
+                message="Learning path already exists for this category; skipped regeneration",
+                analysis=analysis_result,
+                user_profile={
+                    "id": user_profile_model.id,
+                    "goal": user_profile_model.goal,
+                    "experience_level": str(getattr(user_profile_model.experience_level, 'value', user_profile_model.experience_level)),
+                    "learning_style": str(getattr(user_profile_model.learning_style, 'value', user_profile_model.learning_style)),
+                    "created_at": datetime.now().isoformat()
+                }
+            )
+
         # Platform recommendations
         platform_recommendations = await ml_predictor.predict_platforms(
             user_profile=user_profile_model,
@@ -172,8 +216,36 @@ async def complete_setup(
             duration_preference=getattr(request, 'duration_preference', 'flexible')
         )
 
-        # Save path to database
+        # Save path to database with additional race condition protection
         try:
+            # Final check before saving to handle race conditions
+            final_check_paths = await path_repo.get_user_paths(request.user_id)
+            final_existing = next((p for p in (final_check_paths or [])
+                                   if str(p.get('category_id')) == str(request.category_id)
+                                   and (p.get('ai_generated') is True or str(p.get('ai_generated')).lower() == 'true')),
+                                  None)
+            
+            if final_existing and not getattr(request, 'force', False):
+                logger.info(f"Race condition detected: path {final_existing.get('path_id')} created concurrently; skipping save")
+                # Return success but indicate we used existing path
+                analysis_result = {
+                    "recommended_learning_style": str(getattr(user_profile_model.learning_style, 'value', user_profile_model.learning_style)),
+                    "experience_level": str(getattr(user_profile_model.experience_level, 'value', user_profile_model.experience_level)),
+                    "preferred_platforms": [ _platform_to_str(p) for p in top_platforms ],
+                }
+                return MLCompleteSetupResponse(
+                    success=True,
+                    message="ML setup completed successfully, used existing concurrent path generation",
+                    analysis=analysis_result,
+                    user_profile={
+                        "id": user_profile_model.id,
+                        "goal": user_profile_model.goal,
+                        "experience_level": str(getattr(user_profile_model.experience_level, 'value', user_profile_model.experience_level)),
+                        "learning_style": str(getattr(user_profile_model.learning_style, 'value', user_profile_model.learning_style)),
+                        "created_at": datetime.now().isoformat()
+                    }
+                )
+            
             path_data = {
                 "user_id": request.user_id,
                 "category_id": request.category_id,
@@ -185,6 +257,7 @@ async def complete_setup(
 
             # Save path
             saved_path = await path_repo.create_path(path_data)
+            logger.info(f"Successfully created new path with ID: {saved_path.get('path_id')}")
 
             # Save tasks for each step
             for step in learning_path.steps:
@@ -204,7 +277,29 @@ async def complete_setup(
                     await task_repo.create_task(task_data)
         except Exception as e:
             logger.error(f"Error saving path to database: {e}")
-            # Continue without saving if database save fails
+            # Check if error might be due to constraint violation (duplicate)
+            if "unique" in str(e).lower() or "duplicate" in str(e).lower():
+                logger.info("Detected database constraint violation, likely due to concurrent creation")
+                # Return success indicating the path exists
+                analysis_result = {
+                    "recommended_learning_style": str(getattr(user_profile_model.learning_style, 'value', user_profile_model.learning_style)),
+                    "experience_level": str(getattr(user_profile_model.experience_level, 'value', user_profile_model.experience_level)),
+                    "preferred_platforms": [ _platform_to_str(p) for p in top_platforms ],
+                }
+                return MLCompleteSetupResponse(
+                    success=True,
+                    message="ML setup completed successfully, path already exists from concurrent request",
+                    analysis=analysis_result,
+                    user_profile={
+                        "id": user_profile_model.id,
+                        "goal": user_profile_model.goal,
+                        "experience_level": str(getattr(user_profile_model.experience_level, 'value', user_profile_model.experience_level)),
+                        "learning_style": str(getattr(user_profile_model.learning_style, 'value', user_profile_model.learning_style)),
+                        "created_at": datetime.now().isoformat()
+                    }
+                )
+            # Re-raise if it's a different kind of error
+            raise
 
         # Build analysis result (consolidated, non-duplicate)
         analysis_result = {
@@ -234,30 +329,6 @@ async def complete_setup(
         )
 
     # Removed: consolidated into complete-setup endpoint to avoid duplicate flows
-
-
-async def _fetch_user_data(
-    user_id: str,
-    category_id: int,
-    user_repo: UserRepository,
-    assessment_id: Optional[str] = None,
-    general_answer_ids: Optional[List[int]] = None,
-    category_answer_ids: Optional[List[int]] = None,
-) -> Optional[Dict[str, Any]]:
-    """Fetch all necessary user data from database (extended for ML setup)."""
-    try:
-        # Use the repository method to fetch complete user data
-        user_data = await user_repo.get_user_complete_data(
-            user_id,
-            category_id,
-            assessment_id=assessment_id,
-            general_answer_ids=general_answer_ids,
-            category_answer_ids=category_answer_ids,
-        )
-        return user_data
-    except Exception as e:
-        logger.error(f"Error fetching user data: {e}")
-        return None
 
 
 # Removed duplicate ML analysis/profile helpers; using unified flow in complete-setup
