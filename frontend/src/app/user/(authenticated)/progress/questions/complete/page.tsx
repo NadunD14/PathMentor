@@ -56,7 +56,7 @@ export default function CompleteQuestionnairePage() {
             }
 
             // Call frontend API to trigger ML analysis
-            const response = await fetch('/api/ml/complete-setup', {
+            const response = await fetch('/api/learning-paths/complete-setup', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

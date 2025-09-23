@@ -47,7 +47,7 @@ export async function POST(request: NextRequest) {
 
         console.log('ML Data (derived):', mlData);
 
-        // Call backend ML service
+        // Call backend endpoint (moved under learning-paths)
         const backendUrl = process.env.BACKEND_URL || 'http://localhost:8000';
         const mlResponse = await fetch(`${backendUrl}/api/v1/learning-paths/complete-setup`, {
             method: 'POST',
@@ -59,7 +59,7 @@ export async function POST(request: NextRequest) {
 
         if (!mlResponse.ok) {
             const errorText = await mlResponse.text();
-            console.error('Backend ML service error:', errorText);
+            console.error('Backend complete-setup service error:', errorText);
             return NextResponse.json(
                 { error: 'Failed to process ML analysis' },
                 { status: 500 }
@@ -77,7 +77,7 @@ export async function POST(request: NextRequest) {
         return res;
 
     } catch (error) {
-        console.error('Unexpected error in ML complete setup:', error);
+        console.error('Unexpected error in complete setup:', error);
         return NextResponse.json(
             { error: 'Internal server error' },
             { status: 500 }

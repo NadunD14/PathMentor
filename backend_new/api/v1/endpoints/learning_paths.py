@@ -3,13 +3,14 @@ Learning path generation endpoint.
 """
 
 from fastapi import APIRouter, HTTPException, Depends
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Optional
 from datetime import datetime
 
 from models.schemas import (
-    GeneratePathRequest,
     GeneratePathFromUserRequest,
     GeneratePathResponse,
+    MLCompleteSetupRequest,
+    MLCompleteSetupResponse,
     UserProfile,
     LearningPath,
     Resource,
@@ -69,9 +70,10 @@ def _platform_to_str(p) -> str:
     except Exception:
         return str(p)
 
-@router.post("/generate-from-user", response_model=GeneratePathResponse)
-async def generate_learning_path_from_user(
-    request: GeneratePathFromUserRequest,
+
+@router.post("/complete-setup", response_model=MLCompleteSetupResponse)
+async def complete_setup(
+    request: MLCompleteSetupRequest,
     user_repo: UserRepository = Depends(get_user_repository),
     path_repo: PathRepository = Depends(get_path_repository),
     task_repo: TaskRepository = Depends(get_task_repository),
@@ -82,95 +84,95 @@ async def generate_learning_path_from_user(
     reddit_scraper: RedditScraper = Depends(get_reddit_scraper)
 ):
     """
-    Generate a personalized learning path from user ID and category ID.
-    
-    This endpoint:
-    1. Fetches user data and category information from database
-    2. Creates user profile from the fetched data
-    3. Uses the existing path generation logic
+    Complete ML setup and analysis for a user, then generate a learning path.
+
+    This endpoint consolidates the ML setup previously under /ml into learning_paths:
+    1) Fetch user data (optionally filtered by assessment/session or explicit answers)
+    2) Perform ML analysis on user preferences and answers
+    3) Create a user profile for path generation
+    4) Generate a learning path and persist it when possible
     """
     try:
-        logger.info(f"Generating learning path for user {request.user_id}, category {request.category_id}")
-        
-        # Step 1: Fetch user data and create profile
+        logger.info(f"Starting ML setup for user {request.user_id}, category {request.category_id}")
+
+        # Fetch user data using the consolidated complete profile API
         user_data = await _fetch_user_complete_data(request.user_id, request.category_id, user_repo)
-        
+
+        logger.info(f"Fetched user data: {user_data}")
+
         if not user_data:
-            return GeneratePathResponse(
+            return MLCompleteSetupResponse(
                 success=False,
-                message="User data not found or incomplete",
-                learning_path=None
+                message="User data not found or incomplete"
             )
-        
-        # Step 2: Create user profile from fetched data
-        user_profile = await _create_user_profile_from_data(user_data)
+
+        # Create UserProfile from fetched data (simple heuristics)
+        user_profile_model = await _create_user_profile_from_data(user_data)
         # Prefer the normalized field from complete profile; fall back to nested if present
         topic = user_data.get('category_name') or user_data.get('category_info', {}).get('name', 'General Skills')
-        
-        # Step 3: Use existing path generation logic
-        # Get platform recommendations
+
+        logger.info(f"UserProfile: {user_profile_model}")
+
+        # Platform recommendations
         platform_recommendations = await ml_predictor.predict_platforms(
-            user_profile=user_profile,
+            user_profile=user_profile_model,
             topic=topic,
-            platform_preferences=request.platform_preferences
+            platform_preferences=getattr(request, 'platform_preferences', None)
         )
-        
-        # Extract top platforms
+
         top_platforms = [rec.platform for rec in platform_recommendations[:3]]
         logger.info(f"Recommended platforms: {[ _platform_to_str(p) for p in top_platforms ]}")
-        
+
         # Generate search queries
         search_queries = await llm_service.generate_search_queries(
-            user_profile=user_profile,
+            user_profile=user_profile_model,
             topic=topic,
             platforms=top_platforms
         )
         logger.info(f"Generated {search_queries} search queries")
-        
+
         # Fetch resources from different platforms
         all_resources = []
         top_platform_names = { _platform_to_str(p) for p in top_platforms }
-        
+
         # YouTube resources
         if Platform.YOUTUBE.value in top_platform_names or "youtube" in top_platform_names:
             youtube_queries = [q.query for q in search_queries if _platform_to_str(q.platform) == Platform.YOUTUBE.value]
             for query in youtube_queries[:2]:
                 youtube_resources = await youtube_scraper.search_videos(query, max_results=3)
                 all_resources.extend(youtube_resources)
-        
-        # Udemy resources
+
+        # Udemy resources (optional; commented to reduce external calls if desired)
         # if Platform.UDEMY.value in top_platform_names or "udemy" in top_platform_names:
         #     udemy_queries = [q.query for q in search_queries if _platform_to_str(q.platform) == Platform.UDEMY.value]
         #     for query in udemy_queries[:2]:
         #         udemy_resources = await udemy_scraper.search_courses(query, max_results=3)
         #         all_resources.extend(udemy_resources)
-        
-        # # Reddit resources
+
+        # Reddit resources (optional)
         # if Platform.REDDIT.value in top_platform_names or "reddit" in top_platform_names:
         #     reddit_queries = [q.query for q in search_queries if _platform_to_str(q.platform) == Platform.REDDIT.value]
         #     for query in reddit_queries[:1]:
         #         reddit_resources = await reddit_scraper.search_posts(query, max_results=2)
         #         all_resources.extend(reddit_resources)
-        
+
         logger.info(f"Found {len(all_resources)} total resources")
-        
+
         if not all_resources:
-            return GeneratePathResponse(
+            return MLCompleteSetupResponse(
                 success=False,
                 message="No resources found for the given topic. Please try a different topic or check your internet connection.",
-                learning_path=None
             )
-        
+
         # Synthesize learning path
         learning_path = await llm_service.synthesize_learning_path(
-            user_profile=user_profile,
+            user_profile=user_profile_model,
             topic=topic,
             resources=all_resources,
-            duration_preference=request.duration_preference
+            duration_preference=getattr(request, 'duration_preference', 'flexible')
         )
-        
+
         # Save path to database
-        path_id = None
         try:
             path_data = {
                 "user_id": request.user_id,
@@ -180,11 +182,10 @@ async def generate_learning_path_from_user(
                 "status": "in-progress",
                 "ai_generated": True
             }
-            
+
             # Save path
             saved_path = await path_repo.create_path(path_data)
-            path_id = str(saved_path.get("path_id"))
-            
+
             # Save tasks for each step
             for step in learning_path.steps:
                 for resource in step.resources:
@@ -201,27 +202,65 @@ async def generate_learning_path_from_user(
                         "task_order": step.step_number
                     }
                     await task_repo.create_task(task_data)
-            
-            logger.info(f"Saved learning path with ID: {path_id}")
-            
         except Exception as e:
             logger.error(f"Error saving path to database: {e}")
             # Continue without saving if database save fails
-        
-        return GeneratePathResponse(
+
+        # Build analysis result (consolidated, non-duplicate)
+        analysis_result = {
+            "recommended_learning_style": str(getattr(user_profile_model.learning_style, 'value', user_profile_model.learning_style)),
+            "experience_level": str(getattr(user_profile_model.experience_level, 'value', user_profile_model.experience_level)),
+            "preferred_platforms": [ _platform_to_str(p) for p in top_platforms ],
+        }
+
+        return MLCompleteSetupResponse(
             success=True,
-            learning_path=learning_path,
-            message=f"Successfully generated learning path for {topic}",
-            path_id=path_id
+            message="ML setup completed successfully and learning path generated",
+            analysis=analysis_result,
+            user_profile={
+                "id": user_profile_model.id,
+                "goal": user_profile_model.goal,
+                "experience_level": str(getattr(user_profile_model.experience_level, 'value', user_profile_model.experience_level)),
+                "learning_style": str(getattr(user_profile_model.learning_style, 'value', user_profile_model.learning_style)),
+                "created_at": datetime.now().isoformat()
+            }
         )
-        
+
     except Exception as e:
-        logger.error(f"Error generating learning path from user: {e}")
-        return GeneratePathResponse(
+        logger.error(f"Error in ML complete setup: {e}")
+        return MLCompleteSetupResponse(
             success=False,
-            message=f"Failed to generate learning path: {str(e)}",
-            learning_path=None
+            message=f"Failed to complete ML setup: {str(e)}"
         )
+
+    # Removed: consolidated into complete-setup endpoint to avoid duplicate flows
+
+
+async def _fetch_user_data(
+    user_id: str,
+    category_id: int,
+    user_repo: UserRepository,
+    assessment_id: Optional[str] = None,
+    general_answer_ids: Optional[List[int]] = None,
+    category_answer_ids: Optional[List[int]] = None,
+) -> Optional[Dict[str, Any]]:
+    """Fetch all necessary user data from database (extended for ML setup)."""
+    try:
+        # Use the repository method to fetch complete user data
+        user_data = await user_repo.get_user_complete_data(
+            user_id,
+            category_id,
+            assessment_id=assessment_id,
+            general_answer_ids=general_answer_ids,
+            category_answer_ids=category_answer_ids,
+        )
+        return user_data
+    except Exception as e:
+        logger.error(f"Error fetching user data: {e}")
+        return None
+
+
+# Removed duplicate ML analysis/profile helpers; using unified flow in complete-setup
 
 
 @router.get("/user/{user_id}", response_model=List[Dict[str, Any]])
