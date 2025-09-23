@@ -29,7 +29,6 @@ An AI-powered platform that helps users discover effective learning paths based 
 │   └── users_table.sql
 ├── docker-compose.yml         # Optional container orchestration
 ├── Dockerfile                 # Base image (if used)
-└── quick_test.py              # Utility script
 ```
 
 ## Key features

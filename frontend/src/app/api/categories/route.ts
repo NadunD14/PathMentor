@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabase } from '@/supabase-client';
 
+// Disable caching for this route to ensure fresh reads and writes
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 export async function GET() {
     try {
         const { data, error } = await supabase
@@ -16,7 +20,10 @@ export async function GET() {
             );
         }
 
-        return NextResponse.json({ categories: data || [] });
+        return NextResponse.json(
+            { categories: data || [] },
+            { headers: { 'Cache-Control': 'no-store' } }
+        );
     } catch (error) {
         console.error('Unexpected error:', error);
         return NextResponse.json(
@@ -37,9 +44,10 @@ export async function POST(request: NextRequest) {
             );
         }
 
+        // Always create a new row (no upsert). Ensure optional fields default to null
         const { data, error } = await supabase
             .from('categories')
-            .insert([{ name, description, image_url }])
+            .insert([{ name, description: description ?? null, image_url: image_url ?? null }])
             .select()
             .single();
 
@@ -51,7 +59,7 @@ export async function POST(request: NextRequest) {
             );
         }
 
-        return NextResponse.json({ category: data }, { status: 201 });
+        return NextResponse.json({ category: data }, { status: 201, headers: { 'Cache-Control': 'no-store' } });
     } catch (error) {
         console.error('Unexpected error:', error);
         return NextResponse.json(
