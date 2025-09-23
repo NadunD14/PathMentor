@@ -27,7 +27,7 @@ async function getSingleCategoryId(categoryId: number) {
 
 export default function CompleteQuestionnairePage() {
     const router = useRouter();
-    const { selectedCategory, currentStep, resetQuestionnaire } = useQuestionnaireStore();
+    const { selectedCategory, currentStep, resetQuestionnaire, assessmentId } = useQuestionnaireStore();
     const [isProcessing, setIsProcessing] = useState(false);
     const [analysisComplete, setAnalysisComplete] = useState(false);
     const [analysisError, setAnalysisError] = useState<string | null>(null);
@@ -63,6 +63,7 @@ export default function CompleteQuestionnairePage() {
                 },
                 body: JSON.stringify({
                     userId: session.user.id,
+                    assessmentId: assessmentId ?? undefined,
                 }),
             });
 

@@ -5,6 +5,9 @@ import type { Database } from '@/lib/types/database';
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL as string;
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY as string;
 
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 export async function POST(request: NextRequest) {
     try {
         const body = await request.json();
@@ -20,6 +23,7 @@ export async function POST(request: NextRequest) {
         const categoryQuestionId: number | undefined = body.categoryQuestionId ?? body.category_question_id;
         const answerText: string | undefined = body.answerText ?? body.answer_text;
         const optionId: number | undefined = body.optionId ?? body.option_id;
+        const assessmentId: string | undefined = body.assessmentId ?? body.assessment_id;
 
         if (!userId || !categoryQuestionId) {
             return NextResponse.json(
@@ -29,12 +33,17 @@ export async function POST(request: NextRequest) {
         }
 
         // Check if answer already exists for this user and category question
-        const { data: existingAnswer, error: checkError } = await sb
+        let existingQuery = sb
             .from('user_category_answers')
             .select('answer_id')
             .eq('user_id', userId)
-            .eq('category_question_id', categoryQuestionId)
-            .single();
+            .eq('category_question_id', categoryQuestionId);
+
+        if (assessmentId) {
+            existingQuery = existingQuery.eq('assessment_id', assessmentId);
+        }
+
+        const { data: existingAnswer, error: checkError } = await existingQuery.single();
 
         if (checkError && checkError.code !== 'PGRST116') { // PGRST116 = no rows found
             console.error('Error checking existing answer:', checkError);
@@ -66,15 +75,30 @@ export async function POST(request: NextRequest) {
         let result;
         if (existingAnswer) {
             // Update existing answer
-            const { data, error } = await sb
+            let { data, error } = await sb
                 .from('user_category_answers')
                 .update({
                     answer_text: finalAnswerText,
                     option_id: finalOptionId ?? null,
+                    assessment_id: assessmentId ?? null,
                 })
                 .eq('answer_id', existingAnswer.answer_id)
                 .select()
                 .single();
+
+            if (error && (error.code === '42703' || (error.message && error.message.toLowerCase().includes('assessment_id')))) {
+                console.warn('assessment_id column missing on user_category_answers; retrying update without it');
+                const { data: data2, error: err2 } = await sb
+                    .from('user_category_answers')
+                    .update({
+                        answer_text: finalAnswerText,
+                        option_id: finalOptionId ?? null,
+                    })
+                    .eq('answer_id', existingAnswer.answer_id)
+                    .select()
+                    .single();
+                data = data2; error = err2;
+            }
 
             if (error) {
                 console.error('Error updating category answer:', error);
@@ -86,16 +110,32 @@ export async function POST(request: NextRequest) {
             result = data;
         } else {
             // Create new answer
-            const { data, error } = await sb
+            let { data, error } = await sb
                 .from('user_category_answers')
                 .insert({
                     user_id: userId,
                     category_question_id: categoryQuestionId,
                     answer_text: finalAnswerText,
                     option_id: finalOptionId ?? null,
+                    assessment_id: assessmentId ?? null,
                 })
                 .select()
                 .single();
+
+            if (error && (error.code === '42703' || (error.message && error.message.toLowerCase().includes('assessment_id')))) {
+                console.warn('assessment_id column missing on user_category_answers; retrying insert without it');
+                const { data: data2, error: err2 } = await sb
+                    .from('user_category_answers')
+                    .insert({
+                        user_id: userId,
+                        category_question_id: categoryQuestionId,
+                        answer_text: finalAnswerText,
+                        option_id: finalOptionId ?? null,
+                    })
+                    .select()
+                    .single();
+                data = data2; error = err2;
+            }
 
             if (error) {
                 console.error('Error creating category answer:', error);
@@ -107,11 +147,13 @@ export async function POST(request: NextRequest) {
             result = data;
         }
 
-        return NextResponse.json({
+        const res = NextResponse.json({
             success: true,
             answer: result,
             message: existingAnswer ? 'Answer updated successfully' : 'Answer saved successfully'
         });
+        res.headers.set('Cache-Control', 'no-store');
+        return res;
 
     } catch (error: any) {
         console.error('Unexpected error in category answers:', error);
@@ -127,6 +169,7 @@ export async function GET(request: NextRequest) {
         const { searchParams } = new URL(request.url);
         const userId = searchParams.get('userId');
         const categoryId = searchParams.get('categoryId');
+        const assessmentId = searchParams.get('assessmentId');
 
         if (!userId) {
             return NextResponse.json(
@@ -164,21 +207,51 @@ export async function GET(request: NextRequest) {
             query = query.eq('category_questions.category_id', parseInt(categoryId));
         }
 
-        const { data: categoryAnswers, error } = await query;
+        if (assessmentId) {
+            query = query.eq('assessment_id', assessmentId);
+        }
+
+        let { data: categoryAnswers, error } = await query;
+
+        if (error && (error.code === '42703' || (error.message && error.message.toLowerCase().includes('assessment_id')))) {
+            console.warn('assessment_id column missing on user_category_answers; retrying fetch without it');
+            const { data: data2, error: err2 } = await sb
+                .from('user_category_answers')
+                .select(`
+                    *,
+                    category_questions (
+                        category_question_id,
+                        category_id,
+                        question_id,
+                        question_type,
+                        context_for_ai
+                    ),
+                    category_options (
+                        option_id,
+                        option_text
+                    )
+                `)
+                .eq('user_id', userId);
+            categoryAnswers = data2; error = err2;
+        }
 
         if (error) {
             console.error('Error fetching category answers:', error);
-            return NextResponse.json(
+            const res = NextResponse.json(
                 { error: 'Failed to fetch category answers' },
                 { status: 500 }
             );
+            res.headers.set('Cache-Control', 'no-store');
+            return res;
         }
 
-        return NextResponse.json({
+        const res = NextResponse.json({
             user_id: userId,
             category_id: categoryId ? parseInt(categoryId) : null,
             answers: categoryAnswers || []
         });
+        res.headers.set('Cache-Control', 'no-store');
+        return res;
 
     } catch (error) {
         console.error('Unexpected error in GET category answers:', error);

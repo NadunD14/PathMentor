@@ -45,6 +45,7 @@ export interface UserAnswer {
     category_id?: number;
     answer_text?: string;
     option_id?: number;
+    assessment_id?: string;
 }
 
 export interface UserCategoryAnswer {
@@ -53,6 +54,7 @@ export interface UserCategoryAnswer {
     category_question_id: number;
     answer_text?: string;
     option_id?: number;
+    assessment_id?: string;
 }
 
 export interface QuestionnaireState {
@@ -60,6 +62,7 @@ export interface QuestionnaireState {
     selectedCategory: LearningCategory | null;
     selectedCategoryId: number | null;
     currentStep: 'category' | 'general' | 'specific' | 'complete';
+    assessmentId: string | null;
 
     // Questions and answers
     generalQuestions: Question[];
@@ -81,6 +84,7 @@ const initialState = {
     selectedCategory: null,
     selectedCategoryId: null,
     currentStep: 'category' as const,
+    assessmentId: null as string | null,
     generalQuestions: [],
     categoryQuestions: [],
     userAnswers: {},
@@ -93,10 +97,15 @@ export const useQuestionnaireStore = create<QuestionnaireState>()(
             ...initialState,
 
             selectCategory: (category: LearningCategory, categoryId: number) => {
+                // Start a new assessment/session when a category is selected
+                const newAssessmentId = (globalThis as any)?.crypto?.randomUUID
+                    ? (globalThis as any).crypto.randomUUID()
+                    : Math.random().toString(36).slice(2) + Date.now().toString(36);
                 set({
                     selectedCategory: category,
                     selectedCategoryId: categoryId,
-                    currentStep: 'general'
+                    currentStep: 'general',
+                    assessmentId: newAssessmentId,
                 });
             },
 
@@ -140,6 +149,7 @@ export const useQuestionnaireStore = create<QuestionnaireState>()(
                 selectedCategory: state.selectedCategory,
                 selectedCategoryId: state.selectedCategoryId,
                 currentStep: state.currentStep,
+                assessmentId: state.assessmentId,
                 userAnswers: state.userAnswers,
             }),
         }

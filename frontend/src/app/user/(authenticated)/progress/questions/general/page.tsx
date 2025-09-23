@@ -15,7 +15,8 @@ export default function GeneralQuestionsPage() {
         setGeneralQuestions,
         generalQuestions,
         saveAnswer,
-        setCurrentStep
+        setCurrentStep,
+        assessmentId,
     } = useQuestionnaireStore();
 
     const [answers, setAnswers] = useState<Record<number, any>>({});
@@ -89,6 +90,7 @@ export default function GeneralQuestionsPage() {
                     user_id: session.user.id, // Use actual user ID from session
                     answer_text: typeof value === 'string' ? value : undefined,
                     option_id: typeof value === 'number' ? value : undefined,
+                    assessment_id: assessmentId ?? undefined,
                 };
 
                 saveAnswer(parseInt(questionId), answer);
@@ -104,6 +106,7 @@ export default function GeneralQuestionsPage() {
                         questionId: parseInt(questionId),
                         answerText: answer.answer_text,
                         optionId: answer.option_id,
+                        assessmentId: assessmentId ?? undefined,
                     }),
                 });
             }

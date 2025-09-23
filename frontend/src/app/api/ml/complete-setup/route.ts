@@ -1,9 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabase } from '@/supabase-client';
 
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 export async function POST(request: NextRequest) {
     try {
-        const { userId } = await request.json();
+        const { userId, assessmentId } = await request.json();
 
         if (!userId) {
             return NextResponse.json(
@@ -39,6 +42,7 @@ export async function POST(request: NextRequest) {
         const mlData = {
             user_id: userId,
             category_id: selection.category_id,
+            assessment_id: assessmentId ?? null,
         };
 
         console.log('ML Data (derived):', mlData);
@@ -64,11 +68,13 @@ export async function POST(request: NextRequest) {
 
         const mlResult = await mlResponse.json();
 
-        return NextResponse.json({
+        const res = NextResponse.json({
             success: true,
             analysis: mlResult,
             message: 'Setup completed and ML analysis performed successfully'
         }, { status: 200 });
+        res.headers.set('Cache-Control', 'no-store');
+        return res;
 
     } catch (error) {
         console.error('Unexpected error in ML complete setup:', error);

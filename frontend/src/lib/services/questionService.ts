@@ -35,6 +35,7 @@ export interface UserAnswer {
     category_id?: number;
     answer_text?: string;
     option_id?: number;
+    assessment_id?: string;
 }
 
 export interface UserCategoryAnswer {
@@ -43,6 +44,7 @@ export interface UserCategoryAnswer {
     category_question_id: number;
     answer_text?: string;
     option_id?: number;
+    assessment_id?: string;
 }
 
 export class QuestionService {

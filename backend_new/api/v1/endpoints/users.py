@@ -69,7 +69,8 @@ async def save_general_answer(
             question_id=answer_data.question_id,
             category_id=answer_data.category_id,
             answer_text=answer_data.answer_text,
-            option_id=answer_data.option_id
+            option_id=answer_data.option_id,
+            assessment_id=answer_data.assessment_id
         )
         
         if not result:
@@ -95,7 +96,8 @@ async def save_category_answer(
             user_id=answer_data.user_id,
             category_question_id=answer_data.category_question_id,
             answer_text=answer_data.answer_text,
-            option_id=answer_data.option_id
+            option_id=answer_data.option_id,
+            assessment_id=answer_data.assessment_id
         )
         
         if not result:

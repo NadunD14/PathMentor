@@ -15,7 +15,8 @@ export default function CategoryQuestionsPage() {
         setCategoryQuestions,
         categoryQuestions,
         saveAnswer,
-        setCurrentStep
+        setCurrentStep,
+        assessmentId,
     } = useQuestionnaireStore();
 
     const [answers, setAnswers] = useState<Record<number, any>>({});
@@ -96,6 +97,7 @@ export default function CategoryQuestionsPage() {
                     user_id: session.user.id,
                     answer_text: typeof value === 'string' ? value : undefined,
                     option_id: typeof value === 'number' ? value : undefined,
+                    assessment_id: assessmentId ?? undefined,
                 };
 
                 // Save in client store
@@ -113,6 +115,7 @@ export default function CategoryQuestionsPage() {
                         category_question_id: categoryQuestionId,
                         answer_text: answer.answer_text,
                         option_id: answer.option_id,
+                        assessment_id: assessmentId ?? undefined,
                     }),
                 });
             }

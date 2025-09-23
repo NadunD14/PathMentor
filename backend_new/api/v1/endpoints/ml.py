@@ -3,7 +3,7 @@ ML analysis endpoints.
 """
 
 from fastapi import APIRouter, HTTPException, Depends
-from typing import Dict, Any
+from typing import Dict, Any, Optional, List
 from datetime import datetime
 
 from models.schemas import MLCompleteSetupRequest, MLCompleteSetupResponse, GeneratePathFromUserRequest, UserProfile, ExperienceLevel, LearningStyle
@@ -36,8 +36,15 @@ async def complete_ml_setup(
     try:
         logger.info(f"Starting ML setup for user {request.user_id}, category {request.category_id}")
         
-        # Fetch user data
-        user_data = await _fetch_user_data(request.user_id, request.category_id, user_repo)
+        # Fetch user data (optionally filtered by assessment/session or explicit answers)
+        user_data = await _fetch_user_data(
+            request.user_id,
+            request.category_id,
+            user_repo,
+            assessment_id=request.assessment_id,
+            general_answer_ids=request.general_answer_ids,
+            category_answer_ids=request.category_answer_ids,
+        )
 
         logger.info(f"Fetched user data: {user_data}")
         
@@ -73,11 +80,24 @@ async def complete_ml_setup(
         )
 
 
-async def _fetch_user_data(user_id: str, category_id: int, user_repo: UserRepository) -> Dict[str, Any]:
+async def _fetch_user_data(
+    user_id: str,
+    category_id: int,
+    user_repo: UserRepository,
+    assessment_id: Optional[str] = None,
+    general_answer_ids: Optional[List[int]] = None,
+    category_answer_ids: Optional[List[int]] = None,
+) -> Optional[Dict[str, Any]]:
     """Fetch all necessary user data from database."""
     try:
         # Use the repository method to fetch complete user data
-        user_data = await user_repo.get_user_complete_data(user_id, category_id)
+        user_data = await user_repo.get_user_complete_data(
+            user_id,
+            category_id,
+            assessment_id=assessment_id,
+            general_answer_ids=general_answer_ids,
+            category_answer_ids=category_answer_ids,
+        )
         return user_data
     except Exception as e:
         logger.error(f"Error fetching user data: {e}")
