@@ -17,7 +17,7 @@ class Settings(BaseSettings):
     
     # Server
     host: str = "0.0.0.0"
-    port: int = 8000
+    port: int = int(os.getenv("PORT", 8000))  # Railway provides PORT env var
     
     # Database
     supabase_url: Optional[str] = None
