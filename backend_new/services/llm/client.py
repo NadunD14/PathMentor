@@ -26,6 +26,12 @@ class LLMService:
         self.base_url = "https://api.groq.com/openai/v1"
         self.prompts_dir = Path(__file__).parent / "prompts"
         
+        # Configuration for free tier optimization
+        self.max_resources = 8  # Limit resources sent to Groq
+        self.max_description_length = 120  # Max chars for resource descriptions
+        self.max_title_length = 60  # Max chars for resource titles
+        self.max_goal_length = 80  # Max chars for user goals
+        
         if not self.api_key:
             logger.warning("No Groq API key provided - LLM service will not function")
         
@@ -44,36 +50,23 @@ class LLMService:
             return self._get_default_template(filename)
     
     def _get_default_template(self, filename: str) -> str:
-        """Get default prompt templates."""
+        """Get default prompt templates (optimized for token usage)."""
         templates = {
-            "query_gen.txt": """Generate targeted search queries for learning resources.
+            "query_gen.txt": """Generate search queries for learning resources.
 
-User Profile:
-- Goal: {goal}
-- Experience Level: {experience_level}
-- Learning Style: {learning_style}
-- Topic: {topic}
-
-For each platform, create 3-5 specific search queries.
+Profile: {goal} | {experience_level} | {learning_style}
+Topic: {topic}
 Platforms: {platforms}
 
-Return JSON format:
-{{
-    "platform_name": ["query1", "query2", "query3"]
-}}""",
+Return JSON: {{"platform": ["query1", "query2", "query3"]}}""",
             
-            "path_synth.txt": """Create a structured learning path using provided resources.
+            "path_synth.txt": """Create learning path from resources.
 
-User Profile:
-- Goal: {goal}
-- Experience Level: {experience_level}
-- Learning Style: {learning_style}
-- Topic: {topic}
+Profile: {goal} | {experience_level} | {learning_style}
+Topic: {topic}
+Resources: {resources}
 
-Resources:
-{resources}
-
-Create 4-8 progressive learning steps with clear objectives and proper resource allocation."""
+Create 4-6 progressive steps with objectives and resources."""
         }
         return templates.get(filename, "")
     
@@ -90,6 +83,30 @@ Create 4-8 progressive learning steps with clear objectives and proper resource 
     def _normalize_platforms(self, platforms: List[Platform]) -> List[str]:
         return [self._enum_to_str(p).lower() for p in platforms]
 
+    def _estimate_token_count(self, text: str) -> int:
+        """Rough estimation of token count (1 token ≈ 4 characters)."""
+        return len(text) // 4
+
+    def _truncate_if_needed(self, text: str, max_tokens: int = 100) -> str:
+        """Truncate text if it exceeds estimated token limit."""
+        estimated_tokens = self._estimate_token_count(text)
+        if estimated_tokens > max_tokens:
+            max_chars = max_tokens * 4
+            return text[:max_chars] + "..."
+        return text
+    
+    def get_optimization_stats(self) -> Dict[str, Any]:
+        """Get current optimization settings for monitoring."""
+        return {
+            "max_resources": self.max_resources,
+            "max_description_length": self.max_description_length,
+            "max_title_length": self.max_title_length,
+            "max_goal_length": self.max_goal_length,
+            "model": self.model,
+            "estimated_tokens_per_resource": 50,  # Rough estimate
+            "optimization_enabled": True
+        }
+
     async def generate_search_queries(
         self,
         user_profile: UserProfile,
@@ -101,15 +118,15 @@ Create 4-8 progressive learning steps with clear objectives and proper resource 
             raise RuntimeError("GROQ_API_KEY is not configured; cannot generate search queries via Groq")
         
         try:
-            # Structured JSON instruction for Groq
+            # Optimized payload for Groq free tier
             input_payload = {
-                "instruction": "Generate 3-5 targeted search queries per platform. Return ONLY JSON with the shape {\"queries\": {\"platform\": [\"query\"]}} and no extra text.",
+                "instruction": "Generate 3-5 search queries per platform. Return JSON: {\"queries\": {\"platform\": [\"query\"]}}",
                 "user_profile": {
-                    "goal": user_profile.goal,
+                    "goal": self._truncate_if_needed(user_profile.goal, max_tokens=20),  # ~80 chars
                     "experience_level": self._enum_to_str(user_profile.experience_level),
                     "learning_style": self._enum_to_str(user_profile.learning_style)
                 },
-                "topic": topic,
+                "topic": topic[:40] if len(topic) > 40 else topic,  # Shorter topic limit
                 "platforms": self._normalize_platforms(platforms)
             }
 
@@ -156,46 +173,40 @@ Create 4-8 progressive learning steps with clear objectives and proper resource 
             raise RuntimeError("GROQ_API_KEY is not configured; cannot synthesize learning path via Groq")
         
         try:
-            # Provide structured JSON input and require strict JSON output
+            # Optimized resources payload for Groq free tier - limit data sent
+            # Limit resources and prioritize by relevance if possible
+            limited_resources = resources[:self.max_resources] if len(resources) > self.max_resources else resources
+            
             resources_payload = [
                 {
                     "id": r.id,
-                    "title": r.title,
-                    "description": r.description or "",
-                    "url": r.url,
+                    "title": r.title[:self.max_title_length] if len(r.title) > self.max_title_length else r.title,
+                    "description": self._truncate_if_needed(r.description or "", max_tokens=30),  # ~120 chars
                     "platform": self._enum_to_str(r.platform),
-                    "duration": r.duration or "",
+                    "duration": (r.duration or "")[:15] if r.duration and len(r.duration) > 15 else (r.duration or ""),
                     "difficulty": self._enum_to_str(r.difficulty) if r.difficulty else None,
-                    "tags": r.tags or []
+                    "tags": (r.tags or [])[:2]  # Limit to first 2 tags only
                 }
-                for r in resources
+                for r in limited_resources
             ]
+            
+            logger.info(f"Sending {len(limited_resources)} resources (reduced from {len(resources)}) to Groq")
 
             input_payload = {
                 "instruction": (
-                    "Create a structured learning path using provided resources. "
-                    "Return ONLY JSON matching the schema exactly: {\n"
-                    "  \"title\": string,\n"
-                    "  \"description\": string,\n"
-                    "  \"total_duration\": string,\n"
-                    "  \"difficulty\": one of ['beginner','intermediate','advanced','expert'],\n"
-                    "  \"steps\": [ {\n"
-                    "    \"step_number\": number,\n"
-                    "    \"title\": string,\n"
-                    "    \"description\": string,\n"
-                    "    \"estimated_duration\": string,\n"
-                    "    \"learning_objectives\": [string],\n"
-                    "    \"resource_ids\": [string]  // must reference ids from 'resources'\n"
-                    "  } ]\n"
-                    "} with no additional text."
+                    "Create learning path from resources. Return JSON: "
+                    "{\"title\": string, \"description\": string, \"total_duration\": string, "
+                    "\"difficulty\": \"beginner|intermediate|advanced|expert\", "
+                    "\"steps\": [{\"step_number\": number, \"title\": string, \"description\": string, "
+                    "\"estimated_duration\": string, \"learning_objectives\": [string], \"resource_ids\": [string]}]}"
                 ),
                 "user_profile": {
-                    "goal": user_profile.goal,
+                    "goal": self._truncate_if_needed(user_profile.goal, max_tokens=20),  # ~80 chars
                     "experience_level": self._enum_to_str(user_profile.experience_level),
                     "learning_style": self._enum_to_str(user_profile.learning_style)
                 },
-                "topic": topic,
-                "duration_preference": duration_preference or "flexible",
+                "topic": topic[:40] if len(topic) > 40 else topic,
+                "duration_preference": (duration_preference or "flexible")[:30],  # Limit duration preference text
                 "resources": resources_payload
             }
 
@@ -210,14 +221,18 @@ Create 4-8 progressive learning steps with clear objectives and proper resource 
     
     async def _call_llm(self, prompt: str, json_only: bool = False) -> str:
         """Make API call to LLM service."""
+        # Log estimated token usage for monitoring
+        estimated_tokens = self._estimate_token_count(prompt)
+        logger.info(f"Sending ~{estimated_tokens} tokens to Groq API")
+        
         payload: Dict[str, Any] = {
             "model": self.model,
             "messages": [
-                {"role": "system", "content": "You are a service that returns only valid JSON objects, with no additional commentary."},
+                {"role": "system", "content": "Return valid JSON only."},
                 {"role": "user", "content": prompt}
             ],
             "temperature": 0.7,
-            "max_tokens": 1200
+            "max_tokens": 800  # Reduced from 1200 for free tier
         }
         if json_only:
             # Request JSON-only output in OpenAI-compatible way
