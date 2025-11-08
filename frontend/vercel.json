@@ -1,12 +1,12 @@
 {
-  "framework": "nextjs",
-  "buildCommand": "npm run build",
-  "outputDirectory": ".next",
-  "installCommand": "npm ci",
-  "ignoreCommand": "git diff --quiet HEAD~1 HEAD ./",
-  "functions": {
-    "app/api/**/*.ts": {
-      "maxDuration": 30
+    "framework": "nextjs",
+    "buildCommand": "npm run build",
+    "outputDirectory": ".next",
+    "installCommand": "npm ci",
+    "ignoreCommand": "git diff --quiet HEAD~1 HEAD ./",
+    "functions": {
+        "app/api/**/*.ts": {
+            "maxDuration": 30
+        }
     }
-  }
 }
