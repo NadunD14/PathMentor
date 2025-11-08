@@ -16,25 +16,25 @@ export default function AboutPage() {
         {
             name: 'Alex Chen',
             role: 'Founder & CEO',
-            image: '/vercel.svg', // Placeholder image
+            image: '/SE.jpg', // Software Engineering background
             bio: 'Alex founded PathMentor after experiencing firsthand the challenges of self-directed learning in the digital age.'
         },
         {
             name: 'Sarah Johnson',
             role: 'Chief Learning Officer',
-            image: '/vercel.svg', // Placeholder image
+            image: '/UX.jpg', // UX Design background
             bio: 'With 15 years in educational technology, Sarah designs our learning frameworks and pedagogical approaches.'
         },
         {
             name: 'Marcus Williams',
             role: 'CTO',
-            image: '/vercel.svg', // Placeholder image
+            image: '/DS.jpg', // Data Science background
             bio: 'Marcus leads our engineering team and oversees the development of our AI-powered learning platform.'
         },
         {
             name: 'Priya Sharma',
             role: 'Head of AI Research',
-            image: '/vercel.svg', // Placeholder image
+            image: '/ML.jpg', // Machine Learning background
             bio: 'Dr. Sharma specializes in adaptive learning systems and leads our AI development initiatives.'
         }
     ];
@@ -51,9 +51,25 @@ export default function AboutPage() {
                         We're transforming how people learn with AI-powered personalized learning paths.
                         Our platform adapts to your unique learning style, pace, and goals.
                     </p>
-                    <div className="mt-6 flex items-center gap-3">
-                        <Link href="/user/register" className="btn-primary">Get started</Link>
-                        <Link href="/user/pricing" className="btn-outline">See pricing</Link>
+                    <div className="mt-8 flex flex-col sm:flex-row gap-4">
+                        <Link
+                            href="/user/register"
+                            className="inline-flex items-center justify-center px-8 py-3 border border-transparent text-base font-medium rounded-lg text-white bg-blue-600 hover:bg-blue-700 transform hover:scale-105 transition-all duration-200 shadow-lg"
+                        >
+                            <span>Get Started Free</span>
+                            <svg className="ml-2 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                            </svg>
+                        </Link>
+                        <Link
+                            href="/user/login"
+                            className="inline-flex items-center justify-center px-8 py-3 border-2 border-white text-base font-medium rounded-lg text-white bg-transparent hover:bg-white hover:text-blue-600 transform hover:scale-105 transition-all duration-200"
+                        >
+                            <span>Sign In</span>
+                            <svg className="ml-2 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" />
+                            </svg>
+                        </Link>
                     </div>
                 </div>
             </div>
@@ -307,15 +323,31 @@ export default function AboutPage() {
             )}
 
             {/* Call to Action */}
-            <div className="bg-blue-700">
+            <div className="bg-gradient-to-r from-blue-700 to-indigo-800">
                 <div className="container-custom py-12 lg:py-16 lg:flex lg:items-center lg:justify-between">
                     <h2 className="text-3xl font-extrabold tracking-tight text-white sm:text-4xl">
                         <span className="block">Ready to transform your learning journey?</span>
                         <span className="block text-blue-200">Start with PathMentor today.</span>
                     </h2>
-                    <div className="mt-8 flex lg:mt-0 lg:flex-shrink-0 gap-3">
-                        <Link href="/user/register" className="btn-outline bg-white text-blue-600 hover:bg-blue-50 border-white">Get started</Link>
-                        <Link href="/user/login" className="btn-primary bg-blue-800 hover:bg-blue-900">Log in</Link>
+                    <div className="mt-8 flex flex-col sm:flex-row lg:mt-0 lg:flex-shrink-0 gap-4">
+                        <Link
+                            href="/user/register"
+                            className="inline-flex items-center justify-center px-8 py-3 border border-transparent text-base font-medium rounded-lg text-blue-700 bg-white hover:bg-gray-50 transform hover:scale-105 transition-all duration-200 shadow-lg"
+                        >
+                            <span>Get Started Free</span>
+                            <svg className="ml-2 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                            </svg>
+                        </Link>
+                        <Link
+                            href="/user/login"
+                            className="inline-flex items-center justify-center px-8 py-3 border-2 border-white text-base font-medium rounded-lg text-white bg-transparent hover:bg-white hover:text-blue-700 transform hover:scale-105 transition-all duration-200"
+                        >
+                            <span>Sign In</span>
+                            <svg className="ml-2 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" />
+                            </svg>
+                        </Link>
                     </div>
                 </div>
             </div>

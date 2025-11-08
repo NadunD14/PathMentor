@@ -33,8 +33,8 @@ export default function HomePage() {
                 <div className="absolute -bottom-8 left-20 w-72 h-72 bg-purple-300 rounded-full mix-blend-multiply filter blur-xl opacity-30 animate-blob animation-delay-4000"></div>
 
                 <div className="container-custom relative z-10">
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-                        <div className="animate-fadeIn">
+                    <div className="grid grid-cols-1 lg:grid-cols-5 gap-12 items-center">
+                        <div className="lg:col-span-2 animate-fadeIn">
                             <h1 className="heading-lg mb-4 leading-tight">
                                 Master New Skills with<br />
                                 <span className="text-blue-600 relative">
@@ -68,14 +68,60 @@ export default function HomePage() {
                                 </Link>
                             </div>
                         </div>
-                        <div className="flex justify-center animate-fadeInDelayed">
-                            <div className="relative w-full max-w-md transform hover:scale-105 transition-transform duration-500 ease-in-out">
-                                <div className="absolute inset-0 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg shadow-2xl opacity-20 blur-lg -m-2"></div>
-                                <img
-                                    src="/window.svg"
-                                    alt="PathMentor Learning Platform"
-                                    className="relative w-full rounded-lg shadow-2xl"
-                                />
+                        <div className="lg:col-span-3 flex justify-center animate-fadeInDelayed">
+                            <div className="relative w-full max-w-2xl transform hover:scale-105 transition-transform duration-500 ease-in-out">
+                                <div className="absolute inset-0 bg-gradient-to-r from-blue-500 to-purple-600 rounded-2xl shadow-2xl opacity-30 blur-xl -m-4"></div>
+                                <div className="relative bg-white rounded-2xl shadow-2xl overflow-hidden border border-white/20">
+                                    <img
+                                        src="https://images.unsplash.com/photo-1522202176988-66273c2fd55f?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1200&q=80"
+                                        alt="Students learning together - PathMentor Learning Platform"
+                                        className="w-full h-64 sm:h-80 lg:h-96 object-cover"
+                                        loading="lazy"
+                                        onError={(e) => {
+                                            // Fallback to a local image if the external image fails to load
+                                            const target = e.target as HTMLImageElement;
+                                            target.src = '/window.svg';
+                                        }}
+                                    />
+                                    <div className="absolute inset-0 bg-gradient-to-t from-blue-900/90 via-blue-900/50 to-transparent"></div>
+                                    <div className="absolute bottom-0 left-0 right-0 p-6 lg:p-8">
+                                        <div className="flex items-center justify-between mb-4">
+                                            <div className="flex items-center space-x-2">
+                                                <div className="w-3 h-3 bg-green-400 rounded-full animate-pulse"></div>
+                                                <span className="text-green-300 text-sm font-medium">Live Learning</span>
+                                            </div>
+                                            <div className="flex items-center space-x-1">
+                                                <svg className="w-4 h-4 text-yellow-400 fill-current" viewBox="0 0 20 20">
+                                                    <path d="M10 15l-5.878 3.09 1.123-6.545L.489 6.91l6.572-.955L10 0l2.939 5.955 6.572.955-4.756 4.635 1.123 6.545z" />
+                                                </svg>
+                                                <span className="text-yellow-300 text-sm font-medium">4.9/5</span>
+                                            </div>
+                                        </div>
+                                        <h3 className="text-lg sm:text-xl font-bold text-white mb-2">
+                                            Personalized Learning Paths
+                                        </h3>
+                                        <p className="text-blue-100 mb-4 leading-relaxed text-sm sm:text-base">
+                                            Join thousands of learners mastering new skills with our AI-powered personalized learning platform
+                                        </p>
+                                        <div className="flex items-center justify-between text-xs sm:text-sm">
+                                            <div className="flex items-center space-x-3 sm:space-x-4">
+                                                <div className="flex items-center space-x-1">
+                                                    <svg className="w-4 h-4 text-blue-300" fill="currentColor" viewBox="0 0 20 20">
+                                                        <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
+                                                    </svg>
+                                                    <span className="text-blue-200">15K+ Students</span>
+                                                </div>
+                                                <div className="flex items-center space-x-1">
+                                                    <svg className="w-4 h-4 text-blue-300" fill="currentColor" viewBox="0 0 20 20">
+                                                        <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                                    </svg>
+                                                    <span className="text-blue-200">Certified</span>
+                                                </div>
+                                            </div>
+                                            <div className="text-blue-200 font-medium">AI-Powered</div>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
