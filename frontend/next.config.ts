@@ -1,52 +1,30 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  // Enable standalone output for better deployment
-  output: 'standalone',
-
-  // Disable ESLint during build for deployment
+  // Disable ESLint and TypeScript checks during build for faster deployment
   eslint: {
     ignoreDuringBuilds: true,
   },
-
-  // Disable TypeScript errors during build for deployment  
   typescript: {
     ignoreBuildErrors: true,
   },
 
-  // Optimize images
-  images: {
-    domains: ['localhost', 'railway.app'],
-    unoptimized: true // For static export if needed
-  },
-
   // Environment variables
   env: {
-    NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000',
+    NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL,
+    NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL,
+    NEXT_PUBLIC_SUPABASE_ANON_KEY: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
   },
 
-  // Experimental features for better performance
-  experimental: {
-    // optimizeCss: true, // Disabled due to critters module error
+  // Image optimization
+  images: {
+    domains: ['localhost'],
+    unoptimized: true,
   },
 
   // Production optimizations
   compiler: {
     removeConsole: process.env.NODE_ENV === 'production',
-  },
-
-  // Headers for CORS if needed
-  async headers() {
-    return [
-      {
-        source: '/api/:path*',
-        headers: [
-          { key: 'Access-Control-Allow-Origin', value: '*' },
-          { key: 'Access-Control-Allow-Methods', value: 'GET,POST,PUT,DELETE,OPTIONS' },
-          { key: 'Access-Control-Allow-Headers', value: 'Content-Type,Authorization' },
-        ],
-      },
-    ];
   },
 };
 

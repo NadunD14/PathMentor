@@ -55,8 +55,9 @@ export default function CompleteQuestionnairePage() {
                 return;
             }
 
-            // Call frontend API to trigger ML analysis
-            const response = await fetch('/api/learning-paths/complete-setup', {
+            // Call backend API directly for ML analysis
+            const backendUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+            const response = await fetch(`${backendUrl}/api/v1/learning-paths/complete-setup`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

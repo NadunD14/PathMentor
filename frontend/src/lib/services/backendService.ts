@@ -1,5 +1,5 @@
 // Backend API service for communicating with PathMentor backend
-const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8000';
+const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
 // Types for backend API
 export interface BackendUserProfile {
